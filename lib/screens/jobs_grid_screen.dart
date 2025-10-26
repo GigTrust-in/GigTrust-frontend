@@ -1,0 +1,44 @@
+import 'package:flutter/material.dart';
+import '../widgets/job_card.dart';
+
+// Example usage: pass your job list instead of sampleJobs
+class JobsGridScreen extends StatelessWidget {
+  final List<Map<String, String>> jobs;
+  const JobsGridScreen({super.key, required this.jobs});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        // Responsive column counts like Tailwind: 1 / 2 / 3
+        final crossAxisCount = width < 768 ? 1 : (width < 1024 ? 2 : 3);
+        // gap-6 -> 24 px
+        const gap = 24.0;
+        // childAspectRatio can be tuned to control card height relative to width
+        final childAspectRatio = 1.05; // tweak as needed
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: gap,
+            mainAxisSpacing: gap,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: jobs.length,
+          itemBuilder: (context, index) {
+            final job = jobs[index];
+            return JobCard(
+              title: job['title'] ?? 'Untitled',
+              description: job['description'] ?? '',
+              onTap: () {
+                /* navigate to job details */
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
