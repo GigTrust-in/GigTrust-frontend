@@ -5,7 +5,14 @@ class Job {
   final String clientName;
   final String postedDate;
   final String status;
-  final String? workerName;
+  final String? workerName; // ✅ optional
+  final String? amount;
+  final String? tenure;
+  final String? location;
+  final String? jobType;
+  final String? minRating;
+  final String? experience;
+  final String? skills;
 
   Job({
     required this.id,
@@ -14,6 +21,47 @@ class Job {
     required this.clientName,
     required this.postedDate,
     required this.status,
-    this.workerName,
+    this.workerName, // ✅ now optional
+    this.amount,
+    this.tenure,
+    this.location,
+    this.jobType,
+    this.minRating,
+    this.experience,
+    this.skills,
   });
+
+  Job copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? clientName,
+    String? postedDate,
+    String? status,
+    String? workerName,
+    String? amount,
+    String? tenure,
+    String? location,
+    String? jobType,
+    String? minRating,
+    String? experience,
+    String? skills,
+  }) {
+    return Job(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      clientName: clientName ?? this.clientName,
+      postedDate: postedDate ?? this.postedDate,
+      status: status ?? this.status,
+      workerName: workerName ?? this.workerName,
+      amount: amount ?? this.amount,
+      tenure: tenure ?? this.tenure,
+      location: location ?? this.location,
+      jobType: jobType ?? this.jobType,
+      minRating: minRating ?? this.minRating,
+      experience: experience ?? this.experience,
+      skills: skills ?? this.skills,
+    );
+  }
 }

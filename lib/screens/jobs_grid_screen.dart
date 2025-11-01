@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/job_card.dart';
 
-// Example usage: pass your job list instead of sampleJobs
+
 class JobsGridScreen extends StatelessWidget {
   final List<Map<String, String>> jobs;
   const JobsGridScreen({super.key, required this.jobs});
@@ -11,12 +11,11 @@ class JobsGridScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        // Responsive column counts like Tailwind: 1 / 2 / 3
         final crossAxisCount = width < 768 ? 1 : (width < 1024 ? 2 : 3);
         // gap-6 -> 24 px
         const gap = 24.0;
         // childAspectRatio can be tuned to control card height relative to width
-        final childAspectRatio = 1.05; // tweak as needed
+        final childAspectRatio = 1.05; 
 
         return GridView.builder(
           padding: const EdgeInsets.all(16),

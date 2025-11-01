@@ -1,10 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,166 +10,119 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final ImagePicker _picker = ImagePicker();
+  late TextEditingController _nameController;
+  late TextEditingController _skillsController;
+  late TextEditingController _passwordController;
+  String _selectedGender = 'Other';
 
-  Future<void> _pickAndSaveImage(ImageSource source) async {
-    final XFile? file = await _picker.pickImage(
-      source: source,
-      imageQuality: 80,
-    );
-    if (file == null) return;
-    if (!mounted) return; // ensure context is still valid after the await
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    auth.updateAvatar(file.path);
+  @override
+  void initState() {
+    super.initState();
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    _nameController = TextEditingController(text: user?.name ?? '');
+    _skillsController = TextEditingController(text: user?.skills ?? '');
+    _passwordController = TextEditingController();
+    _selectedGender = user?.gender ?? 'Other';
   }
 
-  void _showPickOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from gallery'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _pickAndSaveImage(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take a photo'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _pickAndSaveImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete),
-              title: const Text('Remove photo'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Provider.of<AuthProvider>(
-                  context,
-                  listen: false,
-                ).updateAvatar(null);
-              },
-            ),
-          ],
-        ),
-      ),
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _skillsController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _saveProfile() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    auth.updateProfile(
+      name: _nameController.text,
+      gender: _selectedGender,
+      skills: _skillsController.text,
+      newPassword:
+          _passwordController.text.isNotEmpty ? _passwordController.text : null,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profile updated successfully!')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
-    final theme = Provider.of<ThemeProvider>(context, listen: false);
-    final user = auth.user;
+    final user = Provider.of<AuthProvider>(context).user;
+    if (user == null) return const SizedBox.shrink();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.brightness_6),
-            onPressed: () => theme.toggleTheme(),
-            tooltip: 'Toggle Theme',
-          ),
-        ],
+        title: const Text('Edit Profile'),
+        centerTitle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
       ),
-      body: user == null
-          ? const Center(child: Text('No user signed in.'))
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: _showPickOptions,
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Theme.of(context).primaryColor,
-                          foregroundImage: user.avatarUrl != null
-                              ? FileImage(File(user.avatarUrl!))
-                              : null,
-                          child: user.avatarUrl == null
-                              ? Text(
-                                  user.name.isNotEmpty
-                                      ? user.name[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user.name,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(user.email),
-                            const SizedBox(height: 6),
-                            Text('Role: ${user.role.name}'),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: _showPickOptions,
-                        tooltip: 'Change photo',
-                      ),
-                    ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedGender,
+                  decoration: const InputDecoration(labelText: 'Gender'),
+                  items: const [
+                    DropdownMenuItem(value: 'Male', child: Text('Male')),
+                    DropdownMenuItem(value: 'Female', child: Text('Female')),
+                    DropdownMenuItem(value: 'Other', child: Text('Other')),
+                  ],
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selectedGender = v);
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _skillsController,
+                  decoration:
+                      const InputDecoration(labelText: 'Skills (e.g., Plumbing)'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'New Password'),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _saveProfile,
+                  icon: const Icon(Icons.save),
+                  label: const Text('Save Changes'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  ListTile(
-                    leading: const Icon(Icons.history),
-                    title: const Text('Past Transactions'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/transactions-history'),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.sync),
-                    title: const Text('Ongoing Transactions'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/ongoing-transactions'),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.work_outline),
-                    title: const Text('Ongoing Gigs'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.pushNamed(context, '/ongoing-gigs'),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Provider.of<AuthProvider>(
-                        context,
-                        listen: false,
-                      ).logout();
-                      Navigator.pushReplacementNamed(context, '/login');
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout'),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: const Text('Settings'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/settings'),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 }

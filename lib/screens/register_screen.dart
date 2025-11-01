@@ -15,8 +15,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _otpController = TextEditingController();
+
   Role? selectedRole;
   String error = '';
+  bool otpSent = false; 
 
   @override
   Widget build(BuildContext context) {
@@ -48,22 +52,77 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 const Text('Join a community of talent and opportunity.'),
                 const SizedBox(height: 24),
+
+                // --- Name ---
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Full Name'),
                 ),
                 const SizedBox(height: 12),
+
+                // --- Email ---
                 TextField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
                 ),
                 const SizedBox(height: 12),
+
+                // --- Password ---
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(labelText: 'Password'),
                 ),
                 const SizedBox(height: 12),
+
+                // --- Phone with Send OTP Button ---
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(labelText: 'Phone Number'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      onPressed: () {
+                        if (_phoneController.text.isEmpty) {
+                          setState(() => error = 'Please enter phone number first.');
+                          return;
+                        }
+                        setState(() {
+                          otpSent = true;
+                          error = '';
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('OTP sent successfully')),
+                        );
+                      },
+                      child: const Text('Send OTP'),
+                    ),
+                  ],
+                ),
+
+                // --- OTP Field (only show after OTP sent) ---
+                if (otpSent) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _otpController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Enter OTP'),
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+
+                // --- Role Selection ---
                 DropdownButton<Role>(
                   value: selectedRole,
                   hint: const Text('Select a role'),
@@ -74,28 +133,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onChanged: (role) => setState(() => selectedRole = role),
                   isExpanded: true,
                 ),
+
+                // --- Error Text ---
                 if (error.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(error, style: const TextStyle(color: Colors.red)),
                 ],
+
                 const SizedBox(height: 16),
+
+                // --- Create Account Button ---
                 ElevatedButton(
                   onPressed: () {
                     if (_nameController.text.isEmpty ||
                         _emailController.text.isEmpty ||
                         _passwordController.text.isEmpty ||
+                        _phoneController.text.isEmpty ||
+                        _otpController.text.isEmpty ||
                         selectedRole == null) {
                       setState(() => error = 'Please fill in all fields.');
                       return;
                     }
+
+                    // Placeholder for verifying OTP
+                    // Normally, you’d verify the OTP here before continuing
+
                     auth.register(_nameController.text, _emailController.text, selectedRole!);
                     Navigator.pushReplacementNamed(
                       context,
-                      selectedRole == Role.worker ? '/worker-dashboard' : '/client-dashboard',
+                      selectedRole == Role.worker
+                          ? '/worker-dashboard'
+                          : '/client-dashboard',
                     );
                   },
                   child: const Text('Create Account'),
                 ),
+
+                // --- Already have account ---
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/login'),
                   child: const Text('Already have an account? Sign in'),
