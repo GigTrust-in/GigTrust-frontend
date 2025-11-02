@@ -13,6 +13,10 @@ class Job {
   final String? minRating;
   final String? experience;
   final String? skills;
+  final bool paid;
+  final double? clientRating;
+  final double? workerRating;
+  final String? workerPaymentInfo;
 
   Job({
     required this.id,
@@ -29,6 +33,10 @@ class Job {
     this.minRating,
     this.experience,
     this.skills,
+    this.paid = false,
+    this.clientRating,
+    this.workerRating,
+    this.workerPaymentInfo,
   });
 
   Job copyWith({
@@ -46,6 +54,10 @@ class Job {
     String? minRating,
     String? experience,
     String? skills,
+    bool? paid,
+    double? clientRating,
+    double? workerRating,
+    String? workerPaymentInfo,
   }) {
     return Job(
       id: id ?? this.id,
@@ -62,6 +74,10 @@ class Job {
       minRating: minRating ?? this.minRating,
       experience: experience ?? this.experience,
       skills: skills ?? this.skills,
+      paid: paid ?? this.paid,
+      clientRating: clientRating ?? this.clientRating,
+      workerRating: workerRating ?? this.workerRating,
+      workerPaymentInfo: workerPaymentInfo ?? this.workerPaymentInfo,
     );
   }
 }

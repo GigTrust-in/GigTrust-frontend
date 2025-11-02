@@ -42,7 +42,7 @@ class AboutUsScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Developed by: Ajinkya Kachave & Team',
+                  'Developed by:  Team GigTrust ',
                   style: TextStyle(fontStyle: FontStyle.italic),
                 ),
               ],

@@ -15,6 +15,7 @@ final List<Job> sampleJobs = [
     minRating: '4.0',
     experience: '2 years',
     skills: 'Flutter, Firebase',
+    clientRating: 4.5,
   ),
   Job(
     id: 'job-2',
@@ -30,6 +31,7 @@ final List<Job> sampleJobs = [
     minRating: '4.2',
     experience: '1 year',
     skills: 'React, HTML, CSS',
+    clientRating: 4.2,
   ),
   Job(
     id: 'job-3',
@@ -46,5 +48,8 @@ final List<Job> sampleJobs = [
     minRating: '3.8',
     experience: '6 months',
     skills: 'Python, Pandas, Excel',
+    paid: true,
+    clientRating: 4.8,
+    workerRating: 4.5,
   ),
 ];

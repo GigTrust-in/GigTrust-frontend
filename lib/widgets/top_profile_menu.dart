@@ -27,7 +27,6 @@ class TopProfileMenu extends StatelessWidget {
         const PopupMenuItem(value: 'profile', child: Text('Profile')),
         const PopupMenuItem(value: 'ongoing_gigs', child: Text('Ongoing Gigs')),
         const PopupMenuItem(value: 'past_gigs', child: Text('Past Gigs')),
-        const PopupMenuItem(value: 'find_jobs', child: Text('Find Jobs')),
         const PopupMenuItem(value: 'ongoing_txn', child: Text('Ongoing Transactions')),
         const PopupMenuItem(value: 'past_txn', child: Text('Past Transactions')),
         const PopupMenuDivider(),
@@ -54,9 +53,6 @@ class TopProfileMenu extends StatelessWidget {
             break;
           case 'past_gigs':
             Navigator.pushNamed(context, '/transactions'); // reuse if needed
-            break;
-          case 'find_jobs':
-            Navigator.pushNamed(context, '/find-jobs');
             break;
           case 'ongoing_txn':
             Navigator.pushNamed(context, '/ongoing-transactions');

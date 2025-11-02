@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../models/role.dart';
 import '../models/job.dart';
 import '../providers/job_provider.dart';
 import '../widgets/job_card.dart';
@@ -19,6 +21,22 @@ class _FindJobsScreenState extends State<FindJobsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).user;
+
+    // Redirect non-workers away from this screen
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+      return const SizedBox.shrink();
+    }
+
+    if (user.role != Role.worker) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/client-dashboard');
+      });
+      return const SizedBox.shrink();
+    }
     final jobProvider = Provider.of<JobProvider>(context);
     final List<Job> allJobs = jobProvider.allJobs;
 

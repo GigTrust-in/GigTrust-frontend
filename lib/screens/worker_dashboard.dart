@@ -1,5 +1,3 @@
-// lib/screens/worker_dashboard.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/job_provider.dart';
@@ -7,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/job_card.dart';
 import '../widgets/top_profile_menu.dart';
 import '../models/job.dart';
+import 'rating_screen.dart';
 
 class WorkerDashboard extends StatefulWidget {
   const WorkerDashboard({super.key});
@@ -21,14 +20,6 @@ class _WorkerDashboardState extends State<WorkerDashboard>
   late Animation<double> _scaleAnimation;
   bool _isSearchExpanded = false;
   String _searchQuery = '';
-  final List<String> _categories = [
-    'Plumbing',
-    'Electrical',
-    'Painting',
-    'Cleaning',
-    'Delivery',
-    'IT Support'
-  ];
 
   @override
   void initState() {
@@ -83,7 +74,8 @@ class _WorkerDashboardState extends State<WorkerDashboard>
   }
 
   Widget _buildFindJobsTab(BuildContext context, JobProvider jobProvider) {
-    final jobs = jobProvider.ongoingJobs; // treat these as findable jobs
+    final user = Provider.of<AuthProvider>(context).user;
+    final jobs = jobProvider.allJobs.where((j) => j.status == 'Open' && (user == null || !jobProvider.isRejectedFor(j.id, user.name))).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -130,22 +122,36 @@ class _WorkerDashboardState extends State<WorkerDashboard>
           ),
           const SizedBox(height: 20),
 
-          // Job Categories
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _categories.map((cat) {
-              return GestureDetector(
-                onTap: () {
-                  setState(() => _searchQuery = cat.toLowerCase());
+          // Job Categories (dynamic, horizontally scrollable)
+          Builder(builder: (context) {
+            final cats = <String>{'All', ...jobProvider.allJobs.map((j) => j.jobType ?? 'Others')}.toList();
+            return SizedBox(
+              height: 48,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: cats.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final cat = cats[index];
+                  final isSelected = cat.toLowerCase() == _searchQuery;
+                  return GestureDetector(
+                    onTap: () => setState(() => _searchQuery = cat.toLowerCase()),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      margin: const EdgeInsets.only(left: 6, right: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.blueAccent : Colors.grey[300],
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Center(
+                        child: Text(cat, style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w500)),
+                      ),
+                    ),
+                  );
                 },
-                child: Chip(
-                  label: Text(cat),
-                  backgroundColor: Colors.blue.shade100,
-                ),
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }),
           const SizedBox(height: 20),
 
           // Filtered Jobs
@@ -162,17 +168,62 @@ class _WorkerDashboardState extends State<WorkerDashboard>
                     title: Text(job.title,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('${job.location} • ₹${job.amount}'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Applied for ${job.title}!')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Apply'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            // Prompt for account number / UPI when accepting
+                            final workerName = user?.name ?? 'Unknown';
+                            final messenger = ScaffoldMessenger.of(context);
+                            final nav = Navigator.of(context);
+                            final paymentInfo = await showDialog<String?>(
+                              context: context,
+                              builder: (dialogContext) {
+                                String info = '';
+                                return AlertDialog(
+                                  title: const Text('Enter account number / UPI ID'),
+                                  content: TextField(
+                                    onChanged: (v) => info = v,
+                                    decoration: const InputDecoration(hintText: 'Account number or UPI ID'),
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => nav.pop(), child: const Text('Cancel')),
+                                    ElevatedButton(onPressed: () => nav.pop(info), child: const Text('Submit')),
+                                  ],
+                                );
+                              },
+                            );
+                            if (!mounted) return;
+                            if (paymentInfo == null || paymentInfo.trim().isEmpty) {
+                              messenger.showSnackBar(const SnackBar(content: Text('Payment info required to accept job.')));
+                              return;
+                            }
+                            jobProvider.assignJob(job.id, workerName, workerPaymentInfo: paymentInfo.trim());
+                            if (!mounted) return;
+                            messenger.showSnackBar(SnackBar(content: Text('Accepted ${job.title}')));
+                            setState(() {});
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Accept'),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          onPressed: () {
+                            final workerName = user?.name ?? 'Unknown';
+                            jobProvider.rejectJob(job.id, workerName);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Rejected ${job.title}')),
+                            );
+                            setState(() {});
+                          },
+                          child: const Text('Reject'),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -208,6 +259,7 @@ class _WorkerDashboardState extends State<WorkerDashboard>
   }
 
   void _showJobDetails(BuildContext context, Job job) {
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -222,27 +274,92 @@ class _WorkerDashboardState extends State<WorkerDashboard>
               _detail('Amount', job.amount),
               _detail('Location', job.location),
               _detail('Type', job.jobType),
+              _detail('Client Rating', job.clientRating?.toString()),
               _detail('Tenure', job.tenure),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Reject'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Applied successfully!')),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Apply'),
-          ),
-        ],
+        actions: _buildDetailActions(context, job, user),
       ),
     );
+  }
+
+  List<Widget> _buildDetailActions(BuildContext context, Job job, user) {
+    final jobProvider = Provider.of<JobProvider>(context, listen: false);
+    if (job.status == 'Open') {
+      return [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        ElevatedButton(
+          onPressed: () async {
+            final workerName = user?.name ?? 'Unknown';
+            String info = '';
+            final messenger = ScaffoldMessenger.of(context);
+            final nav = Navigator.of(context);
+            final paymentInfo = await showDialog<String?>(
+              context: context,
+              builder: (dialogContext) {
+                return AlertDialog(
+                  title: const Text('Enter account number / UPI ID'),
+                  content: TextField(
+                    onChanged: (v) => info = v,
+                    decoration: const InputDecoration(hintText: 'Account number or UPI ID'),
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => nav.pop(), child: const Text('Cancel')),
+                    ElevatedButton(onPressed: () => nav.pop(info), child: const Text('Submit')),
+                  ],
+                );
+              },
+            );
+            if (!mounted) return;
+            if (paymentInfo == null || paymentInfo.trim().isEmpty) return;
+            jobProvider.assignJob(job.id, workerName, workerPaymentInfo: paymentInfo.trim());
+            if (!mounted) return;
+            messenger.showSnackBar(SnackBar(content: Text('Accepted ${job.title}')));
+            nav.pop();
+            setState(() {});
+          },
+          child: const Text('Accept'),
+        ),
+      ];
+    }
+
+    // For assigned/completed show a close option and possibly mark complete
+    if (job.status == 'Assigned' && job.workerName == user?.name) {
+      return [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        ElevatedButton(
+          onPressed: () {
+            jobProvider.completeJob(job.id);
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Job marked completed.')));
+            Navigator.pop(context);
+            setState(() {});
+          },
+          child: const Text('Mark Complete'),
+        ),
+      ];
+    }
+
+    // If job is completed and worker hasn't rated client, show Rate Client
+    if (job.status == 'Completed' && job.workerName == user?.name && (job.clientRating == null)) {
+      return [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RatingScreen(jobId: job.id, role: 'worker', targetName: job.clientName),
+              ),
+            );
+          },
+          child: const Text('Rate Client'),
+        ),
+      ];
+    }
+
+    return [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))];
   }
 
   Widget _detail(String label, String? value) {

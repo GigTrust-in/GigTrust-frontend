@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/role.dart';
+import '../utils/validators.dart';
 import '../utils/color_ext.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -155,10 +156,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return;
                     }
 
+                    // Validate email and password
+                    if (!isValidEmail(_emailController.text.trim())) {
+                      setState(() => error = 'Please enter a valid email (include @ and domain).');
+                      return;
+                    }
+                    if (!isValidPassword(_passwordController.text)) {
+                      setState(() => error = 'Password must be 8+ chars, include a number and a special character.');
+                      return;
+                    }
+
                     // Placeholder for verifying OTP
                     // Normally, you’d verify the OTP here before continuing
 
-                    auth.register(_nameController.text, _emailController.text, selectedRole!);
+                    auth.register(_nameController.text, _emailController.text.trim(), selectedRole!, _passwordController.text);
                     Navigator.pushReplacementNamed(
                       context,
                       selectedRole == Role.worker

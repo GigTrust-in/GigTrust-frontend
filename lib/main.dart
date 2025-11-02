@@ -1,8 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/job_provider.dart';
 import 'providers/theme_provider.dart';
+import 'utils/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/worker_dashboard.dart';
@@ -18,6 +20,7 @@ import 'screens/feedback_screen.dart';
 import 'screens/notification_screen.dart';
 import 'screens/wallet_screen.dart';
 import 'screens/support_screen.dart';
+import 'screens/payment_gateway_screen.dart';
 
 void main() {
   runApp(
@@ -41,16 +44,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GigTrust',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
-        brightness: Brightness.dark,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       initialRoute: '/login',
       routes: {
@@ -62,6 +57,7 @@ class MyApp extends StatelessWidget {
         '/settings': (_) => const SettingsScreen(),
         '/about': (_) => const AboutUsScreen(),
         '/find-jobs': (_) => const FindJobsScreen(),
+  '/payment': (_) => const PaymentGatewayScreen(),
         '/transactions': (_) => const TransactionsScreen(),
         '/ongoing-gigs': (_) => const OngoingGigsScreen(),
         '/transactions-history': (_) => const TransactionsHistoryScreen(),

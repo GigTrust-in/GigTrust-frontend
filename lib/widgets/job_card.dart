@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class JobCard extends StatelessWidget {
   final String title;
   final String description;
+  final String? extraInfo;
   final VoidCallback? onTap;
   final double padding;
 
@@ -12,6 +13,7 @@ class JobCard extends StatelessWidget {
     required this.description,
     this.onTap,
     this.padding = 16,
+    this.extraInfo,
   });
 
   @override
@@ -46,6 +48,10 @@ class JobCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
+            if (extraInfo != null) ...[
+              const SizedBox(height: 8),
+              Text(extraInfo!, style: Theme.of(context).textTheme.bodySmall),
+            ],
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

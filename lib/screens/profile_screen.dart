@@ -13,6 +13,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _skillsController;
   late TextEditingController _passwordController;
+  late TextEditingController _confirmPasswordController;
   String _selectedGender = 'Other';
 
   @override
@@ -22,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _skillsController = TextEditingController(text: user?.skills ?? '');
     _passwordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
     _selectedGender = user?.gender ?? 'Other';
   }
 
@@ -30,10 +32,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController.dispose();
     _skillsController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   void _saveProfile() {
+    // If a new password was entered, ensure the confirmation matches
+    if (_passwordController.text.isNotEmpty &&
+        _passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('New password and confirmation do not match.')),
+      );
+      return;
+    }
     final auth = Provider.of<AuthProvider>(context, listen: false);
     auth.updateProfile(
       name: _nameController.text,
@@ -70,6 +81,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
+                // Rating summary
+                if (user.ratingCount > 0) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Rating: ${(user.ratingSum / (user.ratingCount == 0 ? 1 : user.ratingCount)).toStringAsFixed(1)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      Text('(${user.ratingCount} ratings)', style: const TextStyle(color: Colors.black54)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ] else ...[
+                  const Text('No ratings yet', style: TextStyle(color: Colors.black54)),
+                  const SizedBox(height: 12),
+                ],
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Name'),
@@ -97,6 +123,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 TextField(
                   controller: _passwordController,
                   decoration: const InputDecoration(labelText: 'New Password'),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _confirmPasswordController,
+                  decoration: const InputDecoration(labelText: 'Re-enter New Password'),
                   obscureText: true,
                 ),
                 const SizedBox(height: 24),
