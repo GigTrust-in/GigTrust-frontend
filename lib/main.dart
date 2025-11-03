@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
@@ -57,7 +56,7 @@ class MyApp extends StatelessWidget {
         '/settings': (_) => const SettingsScreen(),
         '/about': (_) => const AboutUsScreen(),
         '/find-jobs': (_) => const FindJobsScreen(),
-  '/payment': (_) => const PaymentGatewayScreen(),
+        '/payment': (_) => const PaymentGatewayScreen(),
         '/transactions': (_) => const TransactionsScreen(),
         '/ongoing-gigs': (_) => const OngoingGigsScreen(),
         '/transactions-history': (_) => const TransactionsHistoryScreen(),

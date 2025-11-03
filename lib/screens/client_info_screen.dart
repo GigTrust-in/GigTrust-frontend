@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/job.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/job_card.dart';
@@ -27,10 +28,32 @@ class ClientInfoScreen extends StatelessWidget {
               child: ListView.builder(
                 itemCount: 10,
                 itemBuilder: (context, index) {
-                  return JobCard(
+                  final tempJob = Job(
+                    id: 'job-sample-${index + 1}',
                     title: 'Client gig #${index + 1}',
                     description: 'Brief about this client gig #${index + 1}',
+                    clientName:
+                        Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        ).user?.name ??
+                        'Client',
+                    postedDate: DateTime.now().toIso8601String().split('T')[0],
+                    status: 'Open',
+                    amount: '',
+                    location: '',
+                    tenure: '',
+                    jobType: 'General',
+                    minRating: '',
+                    experience: '',
+                    skills: '',
+                  );
+
+                  return JobCard(
+                    title: tempJob.title,
+                    description: tempJob.description,
                     onTap: () {},
+                    job: tempJob, clientName: '',
                   );
                 },
               ),

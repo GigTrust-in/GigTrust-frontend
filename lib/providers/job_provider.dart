@@ -1,27 +1,34 @@
+// lib/providers/job_provider.dart
 import 'package:flutter/material.dart';
 import '../models/job.dart';
 import '../data/sample_jobs.dart';
 
 class JobProvider with ChangeNotifier {
+  // ✅ Ensure sampleJobs is a List<Job>, not List<Map>
   final List<Job> _allJobs = [...sampleJobs];
-  // track jobs rejected by workers so they don't see them again
   final Map<String, Set<String>> _rejectedByWorker = {};
-  // track escrow transactions created when client pays for a job: jobId -> txId
   final Map<String, String> _escrowTx = {};
 
   List<Job> get allJobs => [..._allJobs];
 
-  List<Job> get ongoingJobs =>
-      _allJobs.where((job) => job.status == 'Open' || job.status == 'Assigned').toList();
+  List<Job> get ongoingJobs => _allJobs
+      .where((job) => job.status == 'Open' || job.status == 'Assigned')
+      .toList();
 
   List<Job> get pastJobs =>
       _allJobs.where((job) => job.status == 'Completed').toList();
 
+  // These return null (probably placeholders)
+  List<Job>? get jobs => null;
+  get availableJobs => null;
+
+  // ✅ Add new job to top of the list
   void addJob(Job job) {
-    _allJobs.add(job);
+    _allJobs.insert(0, job);
     notifyListeners();
   }
 
+  // ✅ Assign job to a worker
   void assignJob(String jobId, String workerName, {String? workerPaymentInfo}) {
     final index = _allJobs.indexWhere((j) => j.id == jobId);
     if (index == -1) return;
@@ -33,6 +40,7 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Reject job for a specific worker
   void rejectJob(String jobId, String workerName) {
     final set = _rejectedByWorker.putIfAbsent(workerName, () => <String>{});
     set.add(jobId);
@@ -45,7 +53,7 @@ class JobProvider with ChangeNotifier {
     return set.contains(jobId);
   }
 
-  /// Mark a job as paid by client and create a simulated escrow tx id
+  // ✅ Handle job payment
   void payForJob(String jobId) {
     final index = _allJobs.indexWhere((j) => j.id == jobId);
     if (index == -1) return;
@@ -55,14 +63,15 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Return escrow tx id if job was paid
   String? escrowTxFor(String jobId) => _escrowTx[jobId];
 
-  /// For a worker, return list of escrow transactions (job title and tx id)
+  // ✅ Returns escrow transactions for a worker
   List<Map<String, String>> escrowTxForWorker(String workerName) {
     final List<Map<String, String>> out = [];
     for (final job in _allJobs) {
-      if (job.workerName == workerName && job.paid && job.status == 'Assigned') {
+      if (job.workerName == workerName &&
+          job.paid &&
+          job.status == 'Assigned') {
         final tx = _escrowTx[job.id] ?? 'on-chain';
         out.add({'title': job.title, 'tx': tx, 'amount': job.amount ?? '0'});
       }
@@ -70,6 +79,7 @@ class JobProvider with ChangeNotifier {
     return out;
   }
 
+  // ✅ Set ratings for both client and worker
   void setWorkerRating(String jobId, double rating) {
     final index = _allJobs.indexWhere((j) => j.id == jobId);
     if (index == -1) return;
@@ -84,6 +94,7 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Mark job as completed
   void completeJob(String jobId) {
     final index = _allJobs.indexWhere((job) => job.id == jobId);
     if (index != -1) {
@@ -92,11 +103,39 @@ class JobProvider with ChangeNotifier {
     }
   }
 
+  // ✅ Filter jobs by type/category
   List<Job> filterJobsByCategory(String category) {
     if (category == 'All') return allJobs;
     return _allJobs
-        .where((job) =>
-            (job.jobType ?? '').toLowerCase() == category.toLowerCase())
+        .where(
+          (job) => (job.jobType ?? '').toLowerCase() == category.toLowerCase(),
+        )
         .toList();
   }
+
+  // ✅ Unified rating method
+  void addRating({
+    required String jobId,
+    required String role, // 'client' or 'worker'
+    required double rating,
+    String? comment,
+  }) {
+    final jobIndex = _allJobs.indexWhere((job) => job.id == jobId);
+    if (jobIndex == -1) return;
+
+    final job = _allJobs[jobIndex];
+
+    if (role == 'worker') {
+      _allJobs[jobIndex] = job.copyWith(clientRating: rating);
+    } else if (role == 'client') {
+      _allJobs[jobIndex] = job.copyWith(workerRating: rating);
+    }
+
+    // Optional: you can store comment later
+    notifyListeners();
+  }
+
+  // ✅ Placeholders for future networking/database features
+  void fetchJobs() {}
+  void applyForJob(String id) {}
 }

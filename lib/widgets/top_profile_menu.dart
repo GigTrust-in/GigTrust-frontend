@@ -1,3 +1,4 @@
+// lib/widgets/top_profile_menu.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -19,16 +20,16 @@ class TopProfileMenu extends StatelessWidget {
         radius: 20,
         backgroundColor: Theme.of(context).colorScheme.primary,
         child: Text(
-          user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : '?',
+          (user != null && user.name.isNotEmpty) ? user.name[0].toUpperCase() : '?',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
       ),
       itemBuilder: (context) => [
         const PopupMenuItem(value: 'profile', child: Text('Profile')),
-        const PopupMenuItem(value: 'ongoing_gigs', child: Text('Ongoing Gigs')),
-        const PopupMenuItem(value: 'past_gigs', child: Text('Past Gigs')),
-        const PopupMenuItem(value: 'ongoing_txn', child: Text('Ongoing Transactions')),
-        const PopupMenuItem(value: 'past_txn', child: Text('Past Transactions')),
+        const PopupMenuItem(value: 'transactions', child: Text('Transactions')),
+        const PopupMenuItem(value: 'wallet', child: Text('Wallet')),
+        const PopupMenuItem(value: 'notifications', child: Text('Notifications')),
+        const PopupMenuItem(value: 'support', child: Text('Support')),
         const PopupMenuDivider(),
         const PopupMenuItem(value: 'settings', child: Text('Settings')),
         const PopupMenuDivider(),
@@ -48,17 +49,17 @@ class TopProfileMenu extends StatelessWidget {
           case 'profile':
             Navigator.pushNamed(context, '/profile');
             break;
-          case 'ongoing_gigs':
-            Navigator.pushNamed(context, '/ongoing-gigs');
-            break;
-          case 'past_gigs':
-            Navigator.pushNamed(context, '/transactions'); // reuse if needed
-            break;
-          case 'ongoing_txn':
-            Navigator.pushNamed(context, '/ongoing-transactions');
-            break;
-          case 'past_txn':
+          case 'transactions':
             Navigator.pushNamed(context, '/transactions-history');
+            break;
+          case 'wallet':
+            Navigator.pushNamed(context, '/wallet');
+            break;
+          case 'notifications':
+            Navigator.pushNamed(context, '/notifications');
+            break;
+          case 'support':
+            Navigator.pushNamed(context, '/support');
             break;
           case 'settings':
             Navigator.pushNamed(context, '/settings');

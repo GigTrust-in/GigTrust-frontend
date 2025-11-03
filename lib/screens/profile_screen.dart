@@ -41,7 +41,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_passwordController.text.isNotEmpty &&
         _passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New password and confirmation do not match.')),
+        const SnackBar(
+          content: Text('New password and confirmation do not match.'),
+        ),
       );
       return;
     }
@@ -50,8 +52,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       name: _nameController.text,
       gender: _selectedGender,
       skills: _skillsController.text,
-      newPassword:
-          _passwordController.text.isNotEmpty ? _passwordController.text : null,
+      newPassword: _passwordController.text.isNotEmpty
+          ? _passwordController.text
+          : null,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +78,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 4,
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -86,14 +91,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Rating: ${(user.ratingSum / (user.ratingCount == 0 ? 1 : user.ratingCount)).toStringAsFixed(1)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Rating: ${(user.ratingSum / (user.ratingCount == 0 ? 1 : user.ratingCount)).toStringAsFixed(1)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Text('(${user.ratingCount} ratings)', style: const TextStyle(color: Colors.black54)),
+                      Text(
+                        '(${user.ratingCount} ratings)',
+                        style: const TextStyle(color: Colors.black54),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                 ] else ...[
-                  const Text('No ratings yet', style: TextStyle(color: Colors.black54)),
+                  const Text(
+                    'No ratings yet',
+                    style: TextStyle(color: Colors.black54),
+                  ),
                   const SizedBox(height: 12),
                 ],
                 TextField(
@@ -116,8 +133,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _skillsController,
-                  decoration:
-                      const InputDecoration(labelText: 'Skills (e.g., Plumbing)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Skills (e.g., Plumbing)',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -128,7 +146,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _confirmPasswordController,
-                  decoration: const InputDecoration(labelText: 'Re-enter New Password'),
+                  decoration: const InputDecoration(
+                    labelText: 'Re-enter New Password',
+                  ),
                   obscureText: true,
                 ),
                 const SizedBox(height: 24),
@@ -142,13 +162,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: const Text('Settings'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.pushNamed(context, '/settings'),
                 ),
               ],
             ),

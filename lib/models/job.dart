@@ -1,3 +1,4 @@
+// lib/models/job.dart
 class Job {
   final String id;
   final String title;
@@ -5,7 +6,7 @@ class Job {
   final String clientName;
   final String postedDate;
   final String status;
-  final String? workerName; // ✅ optional
+  final String? workerName;
   final String? amount;
   final String? tenure;
   final String? location;
@@ -25,7 +26,7 @@ class Job {
     required this.clientName,
     required this.postedDate,
     required this.status,
-    this.workerName, // ✅ now optional
+    this.workerName,
     this.amount,
     this.tenure,
     this.location,
@@ -38,6 +39,10 @@ class Job {
     this.workerRating,
     this.workerPaymentInfo,
   });
+
+  get category => null;
+
+  get budget => null;
 
   Job copyWith({
     String? id,
@@ -80,4 +85,6 @@ class Job {
       workerPaymentInfo: workerPaymentInfo ?? this.workerPaymentInfo,
     );
   }
+
+  void operator [](String other) {}
 }

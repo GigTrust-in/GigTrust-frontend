@@ -166,7 +166,7 @@ class _ClientDashboardState extends State<ClientDashboard> {
               title: job.title,
               description: job.description,
               extraInfo: job.workerName != null ? 'Assigned to: ${job.workerName}' : null,
-              onTap: () => _showJobDetails(context, job),
+              onTap: () => _showJobDetails(context, job), job: job, clientName: '',
             );
           },
         );
@@ -204,6 +204,7 @@ class _ClientDashboardState extends State<ClientDashboard> {
           ),
         ),
         actions: _clientDetailActions(context, job),
+        
       ),
     );
   }
@@ -235,7 +236,7 @@ class _ClientDashboardState extends State<ClientDashboard> {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => RatingScreen(jobId: job.id, role: 'client', targetName: job.workerName ?? 'Worker')),
+              MaterialPageRoute(builder: (_) => RatingScreen(jobId: job.id, role: 'client', targetName: job.workerName ?? 'Worker', job: job,)),
             );
           },
           child: const Text('Rate Worker'),

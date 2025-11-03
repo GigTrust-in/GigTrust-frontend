@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/job.dart';
 import '../widgets/job_card.dart';
 
 
 class JobsGridScreen extends StatelessWidget {
-  final List<Map<String, String>> jobs;
+  final List<Job> jobs;
   const JobsGridScreen({super.key, required this.jobs});
 
   @override
@@ -29,11 +30,15 @@ class JobsGridScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final job = jobs[index];
             return JobCard(
-              title: job['title'] ?? 'Untitled',
-              description: job['description'] ?? '',
+              title: job.title,
+              amount: job.amount,
+              tenure: job.tenure,   
+              location: job.location,
+              description: job.description,
               onTap: () {
                 /* navigate to job details */
               },
+              job: job, clientName: '',
             );
           },
         );

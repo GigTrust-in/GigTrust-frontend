@@ -1,65 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/job.dart';
 
 class JobCard extends StatelessWidget {
   final String title;
   final String description;
-  final String? extraInfo;
-  final VoidCallback? onTap;
-  final double padding;
+  final String? extraInfo; 
+  final VoidCallback onTap;
 
   const JobCard({
     super.key,
     required this.title,
     required this.description,
-    this.onTap,
-    this.padding = 16,
-    this.extraInfo,
+    this.extraInfo, 
+    required this.onTap, required Job job, String? amount, String? location, String? tenure, required String clientName,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: const Color.fromRGBO(0, 0, 0, 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.all(padding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            if (extraInfo != null) ...[
-              const SizedBox(height: 8),
-              Text(extraInfo!, style: Theme.of(context).textTheme.bodySmall),
-            ],
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: const [
-                Icon(Icons.chevron_right, size: 20),
+      borderRadius: BorderRadius.circular(12),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Expanded(
+                child: Text(
+                  description,
+                  style: const TextStyle(fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 3,
+                ),
+              ),
+              if (extraInfo != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  extraInfo!,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w500),
+                ),
               ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

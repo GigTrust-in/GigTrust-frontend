@@ -61,7 +61,7 @@ class PastGigsScreen extends StatelessWidget {
                           ],
                         ),
                       );
-                    },
+                    }, job: job, clientName: '',
                   ),
                 );
               },

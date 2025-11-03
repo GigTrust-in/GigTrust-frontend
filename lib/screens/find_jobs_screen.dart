@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../models/role.dart';
 import '../models/job.dart';
 import '../providers/job_provider.dart';
 import '../widgets/job_card.dart';
+import '../providers/auth_provider.dart';
 
 class FindJobsScreen extends StatefulWidget {
   const FindJobsScreen({super.key});
@@ -21,35 +20,22 @@ class _FindJobsScreenState extends State<FindJobsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<AuthProvider>(context).user;
-
-    // Redirect non-workers away from this screen
-    if (user == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/login');
-      });
-      return const SizedBox.shrink();
-    }
-
-    if (user.role != Role.worker) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, '/client-dashboard');
-      });
-      return const SizedBox.shrink();
-    }
     final jobProvider = Provider.of<JobProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
+    final workerName = auth.user?.name ?? 'Worker';
+
     final List<Job> allJobs = jobProvider.allJobs;
 
-    // Get unique categories from job list dynamically
+    // Get unique categories dynamically
     final categories = <String>{
       'All',
       ...allJobs.map((job) => job.jobType ?? 'Others')
     }.toList();
 
-    // Real-time filtered jobs
+    // Filter jobs in real time
     final filteredJobs = allJobs.where((job) {
       final matchesCategory = _selectedCategory == 'All' ||
-          job.jobType?.toLowerCase() ==
+          (job.jobType ?? '').toLowerCase() ==
               _selectedCategory.toLowerCase();
       final matchesSearch = job.title
               .toLowerCase()
@@ -57,7 +43,8 @@ class _FindJobsScreenState extends State<FindJobsScreen>
           job.description
               .toLowerCase()
               .contains(_searchController.text.toLowerCase());
-      return matchesCategory && matchesSearch;
+      final notRejected = !jobProvider.isRejectedFor(job.id, workerName);
+      return matchesCategory && matchesSearch && notRejected;
     }).toList();
 
     return AnimatedContainer(
@@ -67,6 +54,7 @@ class _FindJobsScreenState extends State<FindJobsScreen>
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
+          // Curved search bar
           GestureDetector(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             child: AnimatedContainer(
@@ -118,7 +106,7 @@ class _FindJobsScreenState extends State<FindJobsScreen>
             ),
           ),
 
-          // Categories appear when expanded
+          // Categories
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             child: _isExpanded
@@ -167,14 +155,13 @@ class _FindJobsScreenState extends State<FindJobsScreen>
 
           const SizedBox(height: 10),
 
-          // Filtered job grid
+          // Job list
           Expanded(
             child: filteredJobs.isEmpty
                 ? const Center(
                     child: Text(
                       'No jobs found.',
-                      style:
-                          TextStyle(fontSize: 16, color: Colors.black54),
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                   )
                 : ListView.builder(
@@ -186,7 +173,13 @@ class _FindJobsScreenState extends State<FindJobsScreen>
                         child: JobCard(
                           title: job.title,
                           description: job.description,
-                          onTap: () => _showJobDetails(context, job),
+                          extraInfo: job.workerName != null
+                              ? 'Assigned to: ${job.workerName}'
+                              : null,
+                          onTap: () => _showJobDetails(
+                              context, job, jobProvider, workerName),
+                          job: job,
+                          clientName: job.clientName,
                         ),
                       );
                     },
@@ -197,7 +190,9 @@ class _FindJobsScreenState extends State<FindJobsScreen>
     );
   }
 
-  void _showJobDetails(BuildContext context, Job job) {
+  // Job details popup with Accept/Reject
+  void _showJobDetails(BuildContext context, Job job,
+      JobProvider jobProvider, String workerName) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -219,17 +214,21 @@ class _FindJobsScreenState extends State<FindJobsScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              jobProvider.rejectJob(job.id, workerName);
+              Navigator.pop(context);
+            },
             child: const Text('Reject'),
           ),
           ElevatedButton(
             onPressed: () {
+              jobProvider.assignJob(job.id, workerName);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Applied successfully!')),
+                const SnackBar(content: Text('Accepted successfully!')),
               );
               Navigator.pop(context);
             },
-            child: const Text('Apply'),
+            child: const Text('Accept'),
           ),
         ],
       ),
