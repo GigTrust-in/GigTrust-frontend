@@ -23,7 +23,8 @@ class SettingsScreen extends StatelessWidget {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, dashboardPath),
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, dashboardPath),
         ),
       ),
       body: ListView(
@@ -38,6 +39,7 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('Dark Mode'),
               value: themeProvider.isDarkMode,
               onChanged: (_) => themeProvider.toggleTheme(),
+              secondary: const Icon(Icons.dark_mode),
             ),
           ),
           const SizedBox(height: 12),
@@ -58,7 +60,8 @@ class SettingsScreen extends StatelessWidget {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 2,
             child: ListTile(
-              leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+              leading:
+                  Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
               title: const Text('Logout'),
               onTap: () {
                 Provider.of<AuthProvider>(context, listen: false).logout();

@@ -101,15 +101,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(width: 8),
                       Text(
                         '(${user.ratingCount} ratings)',
-                        style: const TextStyle(color: Colors.black54),
+                        style: const TextStyle(color: Color.fromARGB(137, 45, 34, 34)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                 ] else ...[
-                  const Text(
+                  Text(
                     'No ratings yet',
-                    style: TextStyle(color: Colors.black54),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                   const SizedBox(height: 12),
                 ],

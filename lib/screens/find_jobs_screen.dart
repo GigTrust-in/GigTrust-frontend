@@ -47,145 +47,143 @@ class _FindJobsScreenState extends State<FindJobsScreen>
       return matchesCategory && matchesSearch && notRejected;
     }).toList();
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.all(16),
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Column(
-        children: [
-          // Curved search bar
-          GestureDetector(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              height: _isExpanded ? 60 : 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: _isExpanded
-                    ? [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ]
-                    : [],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search, color: Colors.black54),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Search for jobs...',
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            // Modern Curved Search Bar
+            GestureDetector(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                height: _isExpanded ? 60 : 50,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: _isExpanded
+                      ? [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ]
+                      : [],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, color: Colors.black54),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Search for jobs...',
+                        ),
+                        onTap: () {
+                          if (!_isExpanded) {
+                            setState(() => _isExpanded = true);
+                          }
+                        },
                       ),
-                      onTap: () {
-                        if (!_isExpanded) {
-                          setState(() => _isExpanded = true);
-                        }
-                      },
                     ),
-                  ),
-                  if (_searchController.text.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.black54),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                    ),
-                ],
+                    if (_searchController.text.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.black54),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Categories
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: _isExpanded
-                ? Container(
-                    margin: const EdgeInsets.symmetric(vertical: 16),
-                    height: 40,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        final isSelected = category == _selectedCategory;
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedCategory = category;
-                          }),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 18, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Colors.blueAccent
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Center(
-                              child: Text(
-                                category,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.black87,
-                                  fontWeight: FontWeight.w500,
+            // Categories Horizontal List
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: _isExpanded
+                  ? Container(
+                      margin: const EdgeInsets.symmetric(vertical: 16),
+                      height: 40,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: categories.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final category = categories[index];
+                          final isSelected = category == _selectedCategory;
+                          return GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedCategory = category;
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.blueAccent
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  category,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Jobs List
+            Expanded(
+              child: filteredJobs.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No jobs found.',
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredJobs.length,
+                      itemBuilder: (context, index) {
+                        final job = filteredJobs[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: JobCard(
+                            job: job,
+                            onTap: () => _showJobDetails(
+                              context,
+                              job,
+                              jobProvider,
+                              workerName,
                             ),
                           ),
                         );
                       },
                     ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Job list
-          Expanded(
-            child: filteredJobs.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No jobs found.',
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredJobs.length,
-                    itemBuilder: (context, index) {
-                      final job = filteredJobs[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: JobCard(
-                          title: job.title,
-                          description: job.description,
-                          extraInfo: job.workerName != null
-                              ? 'Assigned to: ${job.workerName}'
-                              : null,
-                          onTap: () => _showJobDetails(
-                              context, job, jobProvider, workerName),
-                          job: job,
-                          clientName: job.clientName,
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -196,8 +194,7 @@ class _FindJobsScreenState extends State<FindJobsScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(job.title),
         content: SingleChildScrollView(
           child: Column(

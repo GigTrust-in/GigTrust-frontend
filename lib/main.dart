@@ -4,6 +4,7 @@ import 'providers/auth_provider.dart';
 import 'providers/job_provider.dart';
 import 'providers/theme_provider.dart';
 import 'utils/app_theme.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/worker_dashboard.dart';
@@ -12,6 +13,7 @@ import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/about_us_screen.dart';
 import 'screens/find_jobs_screen.dart';
+import 'screens/payment_gateway_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/ongoing_gigs_screen.dart';
 import 'screens/transactions_history_screen.dart';
@@ -19,7 +21,6 @@ import 'screens/feedback_screen.dart';
 import 'screens/notification_screen.dart';
 import 'screens/wallet_screen.dart';
 import 'screens/support_screen.dart';
-import 'screens/payment_gateway_screen.dart';
 
 void main() {
   runApp(
@@ -29,17 +30,18 @@ void main() {
         ChangeNotifierProvider(create: (_) => JobProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: const MyApp(),
+      child: const GigTrustApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GigTrustApp extends StatelessWidget {
+  const GigTrustApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GigTrust',

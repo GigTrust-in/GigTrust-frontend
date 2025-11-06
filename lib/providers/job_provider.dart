@@ -4,31 +4,34 @@ import '../models/job.dart';
 import '../data/sample_jobs.dart';
 
 class JobProvider with ChangeNotifier {
-  // ✅ Ensure sampleJobs is a List<Job>, not List<Map>
   final List<Job> _allJobs = [...sampleJobs];
   final Map<String, Set<String>> _rejectedByWorker = {};
   final Map<String, String> _escrowTx = {};
 
   List<Job> get allJobs => [..._allJobs];
 
-  List<Job> get ongoingJobs => _allJobs
-      .where((job) => job.status == 'Open' || job.status == 'Assigned')
-      .toList();
+  List<Job> get ongoingJobs =>
+      _allJobs.where((job) => job.status == 'Open' || job.status == 'Assigned').toList();
 
-  List<Job> get pastJobs =>
-      _allJobs.where((job) => job.status == 'Completed').toList();
+  List<Job> get pastJobs => _allJobs.where((job) => job.status == 'Completed').toList();
 
-  // These return null (probably placeholders)
-  List<Job>? get jobs => null;
-  get availableJobs => null;
+  // --- Job CRUD ---------------------------------------------------
 
-  // ✅ Add new job to top of the list
   void addJob(Job job) {
     _allJobs.insert(0, job);
     notifyListeners();
   }
 
-  // ✅ Assign job to a worker
+  void updateJob(Job updatedJob) {
+    final index = _allJobs.indexWhere((j) => j.id == updatedJob.id);
+    if (index != -1) {
+      _allJobs[index] = updatedJob;
+      notifyListeners();
+    }
+  }
+
+  // --- Assign / Reject --------------------------------------------
+
   void assignJob(String jobId, String workerName, {String? workerPaymentInfo}) {
     final index = _allJobs.indexWhere((j) => j.id == jobId);
     if (index == -1) return;
@@ -40,7 +43,6 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Reject job for a specific worker
   void rejectJob(String jobId, String workerName) {
     final set = _rejectedByWorker.putIfAbsent(workerName, () => <String>{});
     set.add(jobId);
@@ -49,11 +51,11 @@ class JobProvider with ChangeNotifier {
 
   bool isRejectedFor(String jobId, String workerName) {
     final set = _rejectedByWorker[workerName];
-    if (set == null) return false;
-    return set.contains(jobId);
+    return set?.contains(jobId) ?? false;
   }
 
-  // ✅ Handle job payment
+  // --- Payment / Escrow -------------------------------------------
+
   void payForJob(String jobId) {
     final index = _allJobs.indexWhere((j) => j.id == jobId);
     if (index == -1) return;
@@ -65,13 +67,10 @@ class JobProvider with ChangeNotifier {
 
   String? escrowTxFor(String jobId) => _escrowTx[jobId];
 
-  // ✅ Returns escrow transactions for a worker
   List<Map<String, String>> escrowTxForWorker(String workerName) {
     final List<Map<String, String>> out = [];
     for (final job in _allJobs) {
-      if (job.workerName == workerName &&
-          job.paid &&
-          job.status == 'Assigned') {
+      if (job.workerName == workerName && job.paid && job.status == 'Assigned') {
         final tx = _escrowTx[job.id] ?? 'on-chain';
         out.add({'title': job.title, 'tx': tx, 'amount': job.amount ?? '0'});
       }
@@ -79,22 +78,8 @@ class JobProvider with ChangeNotifier {
     return out;
   }
 
-  // ✅ Set ratings for both client and worker
-  void setWorkerRating(String jobId, double rating) {
-    final index = _allJobs.indexWhere((j) => j.id == jobId);
-    if (index == -1) return;
-    _allJobs[index] = _allJobs[index].copyWith(workerRating: rating);
-    notifyListeners();
-  }
+  // --- Job Completion ---------------------------------------------
 
-  void setClientRating(String jobId, double rating) {
-    final index = _allJobs.indexWhere((j) => j.id == jobId);
-    if (index == -1) return;
-    _allJobs[index] = _allJobs[index].copyWith(clientRating: rating);
-    notifyListeners();
-  }
-
-  // ✅ Mark job as completed
   void completeJob(String jobId) {
     final index = _allJobs.indexWhere((job) => job.id == jobId);
     if (index != -1) {
@@ -103,39 +88,62 @@ class JobProvider with ChangeNotifier {
     }
   }
 
-  // ✅ Filter jobs by type/category
-  List<Job> filterJobsByCategory(String category) {
-    if (category == 'All') return allJobs;
-    return _allJobs
-        .where(
-          (job) => (job.jobType ?? '').toLowerCase() == category.toLowerCase(),
-        )
-        .toList();
-  }
+  // --- Ratings (Unified) ------------------------------------------
 
-  // ✅ Unified rating method
+  /// Add or update a rating for either role
   void addRating({
     required String jobId,
-    required String role, // 'client' or 'worker'
+    required String role, // 'worker' or 'client'
     required double rating,
     String? comment,
   }) {
-    final jobIndex = _allJobs.indexWhere((job) => job.id == jobId);
-    if (jobIndex == -1) return;
+    final index = _allJobs.indexWhere((j) => j.id == jobId);
+    if (index == -1) return;
 
-    final job = _allJobs[jobIndex];
+    final job = _allJobs[index];
 
     if (role == 'worker') {
-      _allJobs[jobIndex] = job.copyWith(clientRating: rating);
+      // Client rates the worker
+      _allJobs[index] = job.copyWith(workerRating: rating);
     } else if (role == 'client') {
-      _allJobs[jobIndex] = job.copyWith(workerRating: rating);
+      // Worker rates the client
+      _allJobs[index] = job.copyWith(clientRating: rating);
     }
 
-    // Optional: you can store comment later
     notifyListeners();
   }
 
-  // ✅ Placeholders for future networking/database features
+  void setWorkerRating(String jobId, double rating) =>
+      addRating(jobId: jobId, role: 'worker', rating: rating);
+
+  void setClientRating(String jobId, double rating) =>
+      addRating(jobId: jobId, role: 'client', rating: rating);
+
+  // --- Recommendations --------------------------------------------
+
+  List<Job> getRecommendedJobs(String workerName) {
+    final workerJobs = allJobs.where((job) => job.workerName == workerName).toList();
+    if (workerJobs.isEmpty) return allJobs.take(3).toList();
+
+    final categories = <String, int>{};
+    for (var job in workerJobs) {
+      final cat = job.jobType ?? 'General';
+      categories[cat] = (categories[cat] ?? 0) + 1;
+    }
+
+    final favCategory =
+        categories.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+
+    return allJobs
+        .where((job) =>
+            (job.jobType ?? '').toLowerCase() == favCategory.toLowerCase() &&
+            job.workerName == null)
+        .take(3)
+        .toList();
+  }
+
+  // --- Placeholders for future networking --------------------------
+
   void fetchJobs() {}
   void applyForJob(String id) {}
 }

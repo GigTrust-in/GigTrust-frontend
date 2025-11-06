@@ -4,8 +4,8 @@ class Job {
   final String title;
   final String description;
   final String clientName;
-  final String postedDate;
-  final String status;
+  final DateTime postedDate;
+  final String status; // e.g. 'Ongoing', 'Completed', 'Pending'
   final String? workerName;
   final String? amount;
   final String? tenure;
@@ -15,11 +15,13 @@ class Job {
   final String? experience;
   final String? skills;
   final bool paid;
-  final double? clientRating;
-  final double? workerRating;
+  final double? clientRating; // Worker → Client
+  final double? workerRating; // Client → Worker
   final String? workerPaymentInfo;
+  final String? feedbackToClient;
+  final String? feedbackToWorker;
 
-  Job({
+  const Job({
     required this.id,
     required this.title,
     required this.description,
@@ -38,18 +40,19 @@ class Job {
     this.clientRating,
     this.workerRating,
     this.workerPaymentInfo,
+    this.feedbackToClient,
+    this.feedbackToWorker,
   });
 
-  get category => null;
-
-  get budget => null;
+  bool get isClientRated => workerRating != null;
+  bool get isWorkerRated => clientRating != null;
 
   Job copyWith({
     String? id,
     String? title,
     String? description,
     String? clientName,
-    String? postedDate,
+    DateTime? postedDate,
     String? status,
     String? workerName,
     String? amount,
@@ -63,6 +66,8 @@ class Job {
     double? clientRating,
     double? workerRating,
     String? workerPaymentInfo,
+    String? feedbackToClient,
+    String? feedbackToWorker,
   }) {
     return Job(
       id: id ?? this.id,
@@ -83,8 +88,8 @@ class Job {
       clientRating: clientRating ?? this.clientRating,
       workerRating: workerRating ?? this.workerRating,
       workerPaymentInfo: workerPaymentInfo ?? this.workerPaymentInfo,
+      feedbackToClient: feedbackToClient ?? this.feedbackToClient,
+      feedbackToWorker: feedbackToWorker ?? this.feedbackToWorker,
     );
   }
-
-  void operator [](String other) {}
 }

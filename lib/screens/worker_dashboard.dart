@@ -6,7 +6,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/job_card.dart';
 import '../widgets/top_profile_menu.dart';
 import '../models/job.dart';
-import 'rating_screen.dart'; // ✅ Keep this import
+import 'rating_screen.dart';
 
 class WorkerDashboard extends StatefulWidget {
   const WorkerDashboard({super.key});
@@ -26,9 +26,9 @@ class _WorkerDashboardState extends State<WorkerDashboard>
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(user != null
-              ? 'Worker — ${user.name}'
-              : 'Worker Dashboard'),
+          title: Text(
+            user != null ? 'Worker — ${user.name}' : 'Worker Dashboard',
+          ),
           leading: const TopProfileMenu(),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
@@ -45,11 +45,33 @@ class _WorkerDashboardState extends State<WorkerDashboard>
           children: [
             _buildGrid(context, jobProvider.ongoingJobs),
             _buildGrid(context, jobProvider.pastJobs),
-            const Center(
-              child: Text('Use "Find Jobs" from its dedicated screen/tab.'),
+            Consumer<JobProvider>(
+              builder: (context, provider, _) {
+                final user = Provider.of<AuthProvider>(context).user;
+                if (user == null) {
+                  return const Center(child: Text('Login to see jobs.'));
+                }
+
+                final recommendedJobs = provider.getRecommendedJobs(user.name);
+
+                if (recommendedJobs.isEmpty) {
+                  return const Center(
+                    child: Text('No jobs recommended for you.'),
+                  );
+                }
+
+                return _buildGrid(context, recommendedJobs);
+              },
             ),
           ],
         ),
+        floatingActionButton: user == null
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => _showEscrowList(user.name),
+                icon: const Icon(Icons.payment),
+                label: const Text('View Payments'),
+              ),
       ),
     );
   }
@@ -68,11 +90,45 @@ class _WorkerDashboardState extends State<WorkerDashboard>
       itemBuilder: (context, index) {
         final job = jobs[index];
         return JobCard(
-          title: job.title,
-          description: job.description,
-          onTap: () => _openDetails(context, job), job: job, clientName: '',
+          job: job,
+          onTap: () => _openDetails(context, job),
         );
       },
+    );
+  }
+
+  void _showEscrowList(String workerName) {
+    final provider = Provider.of<JobProvider>(context, listen: false);
+    final escrowList = provider.escrowTxForWorker(workerName);
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Payments Received'),
+        content: escrowList.isEmpty
+            ? const Text('No payments yet.')
+            : SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: escrowList.length,
+                  itemBuilder: (context, index) {
+                    final tx = escrowList[index];
+                    return ListTile(
+                      title: Text(tx['title'] ?? ''),
+                      subtitle: Text('Amount: ₹${tx['amount']}'),
+                      trailing: Text(tx['tx'] ?? 'Pending'),
+                    );
+                  },
+                ),
+              ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -129,20 +185,18 @@ class _WorkerDashboardState extends State<WorkerDashboard>
         ),
         OutlinedButton(
           onPressed: () {
-            provider.addJob(
-              job.copyWith(status: 'Open', workerName: null),
-            );
+            provider.addJob(job.copyWith(status: 'Open', workerName: null));
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Job reopened')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Job reopened')));
           },
           child: const Text('Cancel'),
         ),
       ];
     }
 
-    // ✅ Completed job — allow worker to rate client
+    // Completed job — allow worker to rate client
     if (job.status == 'Completed' &&
         job.workerName == myName &&
         (job.clientRating == null)) {
@@ -157,7 +211,12 @@ class _WorkerDashboardState extends State<WorkerDashboard>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => RatingScreen(job: job, jobId: '', role: '', targetName: '',), // ✅ pass actual job
+                builder: (_) => RatingScreen(
+                  job: job,
+                  jobId: job.id,
+                  role: 'worker',
+                  targetName: job.clientName,
+                ),
               ),
             );
           },

@@ -155,9 +155,8 @@ class _FindJobsScreenState extends State<FindJobsScreen>
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: JobCard(
-                          title: job.title,
-                          description: job.description,
-                          onTap: () => _showJobDetails(context, job), job: job, clientName: '',
+                          job: job,
+                          onTap: () => _showJobDetails(context, job),
                         ),
                       );
                     },

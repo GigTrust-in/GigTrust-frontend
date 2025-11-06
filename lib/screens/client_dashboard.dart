@@ -1,3 +1,4 @@
+// lib/screens/client_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -35,32 +36,65 @@ class _ClientDashboardState extends State<ClientDashboard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: _titleController, decoration: const InputDecoration(labelText: 'Title')),
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _descController, decoration: const InputDecoration(labelText: 'Description')),
+              TextField(
+                controller: _descController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _amountController, decoration: const InputDecoration(labelText: 'Amount (₹)')),
+              TextField(
+                controller: _amountController,
+                decoration: const InputDecoration(labelText: 'Amount (₹)'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _locationController, decoration: const InputDecoration(labelText: 'Location')),
+              TextField(
+                controller: _locationController,
+                decoration: const InputDecoration(labelText: 'Location'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _tenureController, decoration: const InputDecoration(labelText: 'Tenure')),
+              TextField(
+                controller: _tenureController,
+                decoration: const InputDecoration(labelText: 'Tenure'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _ratingController, decoration: const InputDecoration(labelText: 'Minimum Rating')),
+              TextField(
+                controller: _ratingController,
+                decoration: const InputDecoration(labelText: 'Minimum Rating'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _experienceController, decoration: const InputDecoration(labelText: 'Experience')),
+              TextField(
+                controller: _experienceController,
+                decoration: const InputDecoration(labelText: 'Experience'),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _skillsController, decoration: const InputDecoration(labelText: 'Skills')),
+              TextField(
+                controller: _skillsController,
+                decoration: const InputDecoration(labelText: 'Skills'),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Job Type'),
                 initialValue: _selectedJobType,
                 items: const [
                   DropdownMenuItem(value: 'Plumbing', child: Text('Plumbing')),
-                  DropdownMenuItem(value: 'Electrician', child: Text('Electrician')),
-                  DropdownMenuItem(value: 'Carpenter', child: Text('Carpenter')),
+                  DropdownMenuItem(
+                    value: 'Electrician',
+                    child: Text('Electrician'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Carpenter',
+                    child: Text('Carpenter'),
+                  ),
                   DropdownMenuItem(value: 'Painting', child: Text('Painting')),
                   DropdownMenuItem(value: 'Cleaning', child: Text('Cleaning')),
-                  DropdownMenuItem(value: 'Gardening', child: Text('Gardening')),
+                  DropdownMenuItem(
+                    value: 'Gardening',
+                    child: Text('Gardening'),
+                  ),
                 ],
                 onChanged: (value) => setState(() => _selectedJobType = value),
               ),
@@ -68,10 +102,16 @@ class _ClientDashboardState extends State<ClientDashboard> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
-              final user = Provider.of<AuthProvider>(context, listen: false).user;
+              final user = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              ).user;
               if (user == null) return;
 
               final newJob = Job(
@@ -79,7 +119,7 @@ class _ClientDashboardState extends State<ClientDashboard> {
                 title: _titleController.text.trim(),
                 description: _descController.text.trim(),
                 clientName: user.name,
-                postedDate: DateTime.now().toIso8601String().split('T')[0],
+                postedDate: DateTime.now(),
                 status: 'Open',
                 amount: _amountController.text.trim(),
                 location: _locationController.text.trim(),
@@ -113,7 +153,11 @@ class _ClientDashboardState extends State<ClientDashboard> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(user != null ? 'Client Dashboard — ${user.name}' : 'Client Dashboard'),
+          title: Text(
+            user != null
+                ? 'Client Dashboard — ${user.name}'
+                : 'Client Dashboard',
+          ),
           leading: const TopProfileMenu(),
           actions: [
             IconButton(
@@ -122,7 +166,12 @@ class _ClientDashboardState extends State<ClientDashboard> {
               tooltip: 'Payments',
             ),
           ],
-          bottom: const TabBar(tabs: [Tab(text: 'Ongoing Gigs'), Tab(text: 'Past Gigs')]),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Ongoing Gigs'),
+              Tab(text: 'Past Gigs'),
+            ],
+          ),
         ),
         body: TabBarView(
           children: [
@@ -163,10 +212,8 @@ class _ClientDashboardState extends State<ClientDashboard> {
           itemBuilder: (context, index) {
             final job = jobs[index];
             return JobCard(
-              title: job.title,
-              description: job.description,
-              extraInfo: job.workerName != null ? 'Assigned to: ${job.workerName}' : null,
-              onTap: () => _showJobDetails(context, job), job: job, clientName: '',
+              job: job,
+              onTap: () => _showJobDetails(context, job),
             );
           },
         );
@@ -197,14 +244,15 @@ class _ClientDashboardState extends State<ClientDashboard> {
               _detail('Location', job.location),
               _detail('Type', job.jobType),
               _detail('Client Rating', job.clientRating?.toString()),
-              if (job.workerName != null) _detail('Accepted by', job.workerName),
-              if (job.workerName != null) _detail('Worker Rating', job.workerRating?.toString()),
+              if (job.workerName != null)
+                _detail('Accepted by', job.workerName),
+              if (job.workerName != null)
+                _detail('Worker Rating', job.workerRating?.toString()),
               _detail('Tenure', job.tenure),
             ],
           ),
         ),
         actions: _clientDetailActions(context, job),
-        
       ),
     );
   }
@@ -212,31 +260,76 @@ class _ClientDashboardState extends State<ClientDashboard> {
   List<Widget> _clientDetailActions(BuildContext context, Job job) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.user;
-    // If assigned and current user is the client and not paid yet -> show Pay
-    if (job.status == 'Assigned' && user != null && user.name == job.clientName && !job.paid) {
+
+    // If assigned and not paid yet -> show Pay button
+    if (job.status == 'Assigned' &&
+        user != null &&
+        user.name == job.clientName &&
+        !job.paid) {
       return [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
         ElevatedButton(
           onPressed: () {
-            // Navigate to payment with jobId and amount prefilled
             Navigator.pop(context);
-            Navigator.pushNamed(context, '/payment', arguments: {'jobId': job.id, 'amount': job.amount});
+            Navigator.pushNamed(
+              context,
+              '/payment',
+              arguments: {'jobId': job.id, 'amount': job.amount},
+            );
           },
           child: const Text('Pay Worker'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final txId =
+                Provider.of<JobProvider>(
+                  context,
+                  listen: false,
+                ).escrowTxFor(job.id) ??
+                'Pending';
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Escrow Tx: $txId')));
+          },
+          child: const Text('View Payment Status'),
         ),
       ];
     }
 
-    // If job is completed and client hasn't rated worker yet
-    if (job.status == 'Completed' && user != null && user.name == job.clientName && (job.workerRating == null)) {
+    // Completed job — allow client to rate worker
+    if (job.status == 'Completed' &&
+        user != null &&
+        user.name == job.clientName &&
+        (job.workerRating == null)) {
+      if (job.workerName == null) {
+        return [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ];
+      }
       return [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
         ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => RatingScreen(jobId: job.id, role: 'client', targetName: job.workerName ?? 'Worker', job: job,)),
+              MaterialPageRoute(
+                builder: (_) => RatingScreen(
+                  job: job,
+                  jobId: job.id,
+                  role: 'client',
+                  targetName: job.workerName ?? 'Worker',
+                ),
+              ),
             );
           },
           child: const Text('Rate Worker'),
@@ -244,6 +337,11 @@ class _ClientDashboardState extends State<ClientDashboard> {
       ];
     }
 
-    return [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))];
+    return [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Close'),
+      ),
+    ];
   }
 }

@@ -34,9 +34,6 @@ class WorkerInfoScreen extends StatelessWidget {
                       itemCount: assignedJobs.length,
                       itemBuilder: (context, index) {
                         return JobCard(
-                          title: 'Worker gig #${index + 1}',
-                          clientName: assignedJobs[index].clientName,
-                          description: 'Brief about this worker gig #${index + 1}',
                           onTap: () {}, job: assignedJobs[index],
                         );
                       },

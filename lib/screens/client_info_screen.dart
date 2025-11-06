@@ -32,13 +32,8 @@ class ClientInfoScreen extends StatelessWidget {
                     id: 'job-sample-${index + 1}',
                     title: 'Client gig #${index + 1}',
                     description: 'Brief about this client gig #${index + 1}',
-                    clientName:
-                        Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        ).user?.name ??
-                        'Client',
-                    postedDate: DateTime.now().toIso8601String().split('T')[0],
+                    clientName: user?.name ?? 'Client',
+                    postedDate: DateTime.now(),
                     status: 'Open',
                     amount: '',
                     location: '',
@@ -50,11 +45,9 @@ class ClientInfoScreen extends StatelessWidget {
                   );
 
                   return JobCard(
-                    title: tempJob.title,
-                    description: tempJob.description,
-                    onTap: () {},
-                    job: tempJob, clientName: '',
-                  );
+                    job: tempJob, 
+                    onTap: () {}
+                    );
                 },
               ),
             ),

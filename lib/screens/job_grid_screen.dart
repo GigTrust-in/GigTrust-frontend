@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/job.dart';
+import '../models/job.dart';
 import '../widgets/job_card.dart';
-
+import 'job_details_screen.dart';
 
 class JobsGridScreen extends StatelessWidget {
   final List<Job> jobs;
@@ -13,10 +13,8 @@ class JobsGridScreen extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final crossAxisCount = width < 768 ? 1 : (width < 1024 ? 2 : 3);
-        // gap-6 -> 24 px
         const gap = 24.0;
-        // childAspectRatio can be tuned to control card height relative to width
-        final childAspectRatio = 1.05; 
+        final childAspectRatio = 1.05;
 
         return GridView.builder(
           padding: const EdgeInsets.all(16),
@@ -30,15 +28,16 @@ class JobsGridScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final job = jobs[index];
             return JobCard(
-              title: job.title,
-              amount: job.amount,
-              tenure: job.tenure,   
-              location: job.location,
-              description: job.description,
+              job: job,
               onTap: () {
-                /* navigate to job details */
+                // Navigate to full Job Details Screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => JobDetailsScreen(job: job),
+                  ),
+                );
               },
-              job: job, clientName: '',
             );
           },
         );
