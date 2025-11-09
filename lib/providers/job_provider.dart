@@ -15,7 +15,6 @@ class JobProvider with ChangeNotifier {
 
   List<Job> get pastJobs => _allJobs.where((job) => job.status == 'Completed').toList();
 
-  // --- Job CRUD ---------------------------------------------------
 
   void addJob(Job job) {
     _allJobs.insert(0, job);
@@ -30,7 +29,7 @@ class JobProvider with ChangeNotifier {
     }
   }
 
-  // --- Assign / Reject --------------------------------------------
+
 
   void assignJob(String jobId, String workerName, {String? workerPaymentInfo}) {
     final index = _allJobs.indexWhere((j) => j.id == jobId);

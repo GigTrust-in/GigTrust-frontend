@@ -23,6 +23,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String error = '';
   bool otpSent = false;
 
+  void _sendOtp() {
+    final phone = _phoneController.text.trim();
+
+    if (phone.isEmpty || phone.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(phone)) {
+      setState(() => error = 'Please enter a valid 10-digit phone number.');
+      return;
+    }
+
+    setState(() {
+      otpSent = true;
+      error = '';
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('OTP sent successfully!')),
+    );
+  }
+
+  void _register(AuthProvider auth) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final otp = _otpController.text.trim();
+
+    if (_nameController.text.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        _phoneController.text.isEmpty ||
+        otp.isEmpty ||
+        selectedRole == null) {
+      setState(() => error = 'Please fill in all fields.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setState(() => error = 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      setState(() => error =
+          'Password must be at least 8 characters, include a number and a special character.');
+      return;
+    }
+
+    if (otp.length != 4 || !RegExp(r'^[0-9]+$').hasMatch(otp)) {
+      setState(() => error = 'Please enter a valid 4-digit OTP.');
+      return;
+    }
+
+    setState(() => error = '');
+    auth.register(
+      _nameController.text,
+      email,
+      selectedRole!,
+      password,
+    );
+
+    Navigator.pushReplacementNamed(
+      context,
+      selectedRole == Role.worker ? '/worker-dashboard' : '/client-dashboard',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -68,7 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- Name ---
+                // Name
                 _buildCurvedTextField(
                   controller: _nameController,
                   label: 'Full Name',
@@ -76,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // --- Email ---
+                // Email
                 _buildCurvedTextField(
                   controller: _emailController,
                   label: 'Email',
@@ -84,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // --- Password ---
+                // Password
                 _buildCurvedTextField(
                   controller: _passwordController,
                   label: 'Password',
@@ -93,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // --- Phone + OTP ---
+                // Phone and OTP button
                 Row(
                   children: [
                     Expanded(
@@ -117,38 +180,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         elevation: 3,
                       ),
-                      onPressed: () {
-                        if (_phoneController.text.isEmpty) {
-                          setState(() => error = 'Please enter phone number first.');
-                          return;
-                        }
-                        setState(() {
-                          otpSent = true;
-                          error = '';
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('OTP sent successfully')),
-                        );
-                      },
+                      onPressed: _sendOtp,
                       child: const Text('Send OTP'),
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
 
-                // --- OTP Field ---
-                if (otpSent) ...[
-                  const SizedBox(height: 12),
+                // OTP field (shown only after sending)
+                if (otpSent)
                   _buildCurvedTextField(
                     controller: _otpController,
                     label: 'Enter OTP',
-                    icon: Icons.numbers,
+                    icon: Icons.verified_outlined,
                     inputType: TextInputType.number,
                   ),
-                ],
 
                 const SizedBox(height: 12),
 
-                // --- Role Selection ---
+                // Role Selection
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
@@ -182,15 +232,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
 
-                // --- Error Text ---
-                if (error.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                const SizedBox(height: 12),
+
+                // Error Text
+                if (error.isNotEmpty)
                   Text(error, style: const TextStyle(color: Colors.red)),
-                ],
 
                 const SizedBox(height: 16),
 
-                // --- Create Account Button ---
+                // Create Account button
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
@@ -201,42 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     elevation: 4,
                   ),
-                  onPressed: () {
-                    if (_nameController.text.isEmpty ||
-                        _emailController.text.isEmpty ||
-                        _passwordController.text.isEmpty ||
-                        _phoneController.text.isEmpty ||
-                        _otpController.text.isEmpty ||
-                        selectedRole == null) {
-                      setState(() => error = 'Please fill in all fields.');
-                      return;
-                    }
-
-                    if (!isValidEmail(_emailController.text.trim())) {
-                      setState(() => error =
-                          'Please enter a valid email (include @ and domain).');
-                      return;
-                    }
-                    if (!isValidPassword(_passwordController.text)) {
-                      setState(() => error =
-                          'Password must be 8+ chars, include a number and a special character.');
-                      return;
-                    }
-
-                    auth.register(
-                      _nameController.text,
-                      _emailController.text.trim(),
-                      selectedRole!,
-                      _passwordController.text,
-                    );
-
-                    Navigator.pushReplacementNamed(
-                      context,
-                      selectedRole == Role.worker
-                          ? '/worker-dashboard'
-                          : '/client-dashboard',
-                    );
-                  },
+                  onPressed: () => _register(auth),
                   child: const Text(
                     'Create Account',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -245,7 +260,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 12),
 
-                // --- Already have account ---
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/login'),
                   child: const Text(
@@ -261,7 +275,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  /// Curved Text Field Builder
+  /// Reusable Curved TextField
   Widget _buildCurvedTextField({
     required TextEditingController controller,
     required String label,

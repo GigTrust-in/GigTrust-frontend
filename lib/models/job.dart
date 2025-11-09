@@ -5,7 +5,7 @@ class Job {
   final String description;
   final String clientName;
   final DateTime postedDate;
-  final String status; // e.g. 'Ongoing', 'Completed', 'Pending'
+  final String status; // e.g. 'Ongoing', 'Completed', 'Pending', 'Open', 'Assigned'
   final String? workerName;
   final String? amount;
   final String? tenure;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/job.dart';
+import '../models/job.dart';
 
 class JobCard extends StatelessWidget {
   final Job job;
@@ -8,11 +8,14 @@ class JobCard extends StatelessWidget {
   const JobCard({
     super.key,
     required this.job,
-    required this.onTap,
+    required this.onTap, 
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Text(job.title, style: theme.textTheme.titleMedium);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -24,12 +27,14 @@ class JobCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Job title
               Text(
                 job.title,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
+
+              // Job description
               Text(
                 job.description,
                 style: const TextStyle(fontSize: 14),
@@ -37,27 +42,42 @@ class JobCard extends StatelessWidget {
                 maxLines: 3,
               ),
               const SizedBox(height: 8),
+
+              // Job details (amount, location, tenure)
               if (job.amount != null)
-                Text("💰 ${job.amount}", style: const TextStyle(fontSize: 13)),
+                Text("₹ ${job.amount}", style: const TextStyle(fontSize: 13)),
               if (job.location != null)
-                Text("📍 ${job.location}", style: const TextStyle(fontSize: 13)),
+                Text("Location: ${job.location}", style: const TextStyle(fontSize: 13)),
               if (job.tenure != null)
-                Text("⏳ ${job.tenure}", style: const TextStyle(fontSize: 13)),
+                Text("Tenure: ${job.tenure}", style: const TextStyle(fontSize: 13)),
+
               const SizedBox(height: 8),
+
+              // Bottom row: client name and status badge
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("👤 ${job.clientName}",
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(
-                    job.status,
-                    style: TextStyle(
-                      color: job.status == "Completed"
-                          ? Colors.green
-                          : job.status == "Ongoing"
-                              ? Colors.blue
-                              : Colors.orange,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      "👤 ${job.clientName}",
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _statusColor(job.status).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      job.status,
+                      style: TextStyle(
+                        color: _statusColor(job.status),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -67,5 +87,17 @@ class JobCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helper: returns color based on job status
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Completed':
+        return Colors.green;
+      case 'Ongoing':
+        return Colors.blue;
+      default:
+        return Colors.orange;
+    }
   }
 }

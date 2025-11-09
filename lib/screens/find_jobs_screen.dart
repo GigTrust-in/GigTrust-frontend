@@ -1,9 +1,11 @@
+// lib/screens/find_jobs_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/job.dart';
 import '../providers/job_provider.dart';
 import '../widgets/job_card.dart';
 import '../providers/auth_provider.dart';
+import 'job_details_screen.dart';
 
 class FindJobsScreen extends StatefulWidget {
   const FindJobsScreen({super.key});
@@ -12,8 +14,7 @@ class FindJobsScreen extends StatefulWidget {
   State<FindJobsScreen> createState() => _FindJobsScreenState();
 }
 
-class _FindJobsScreenState extends State<FindJobsScreen>
-    with SingleTickerProviderStateMixin {
+class _FindJobsScreenState extends State<FindJobsScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isExpanded = false;
   String _selectedCategory = 'All';
@@ -26,91 +27,80 @@ class _FindJobsScreenState extends State<FindJobsScreen>
 
     final List<Job> allJobs = jobProvider.allJobs;
 
-    // Get unique categories dynamically
-    final categories = <String>{
-      'All',
-      ...allJobs.map((job) => job.jobType ?? 'Others')
-    }.toList();
+    // Get unique categories (stable order)
+    final categories = <String>{'All', ...allJobs.map((job) => job.jobType ?? 'Others')}.toList();
 
-    // Filter jobs in real time
+    final query = _searchController.text.trim().toLowerCase();
+
     final filteredJobs = allJobs.where((job) {
       final matchesCategory = _selectedCategory == 'All' ||
-          (job.jobType ?? '').toLowerCase() ==
-              _selectedCategory.toLowerCase();
-      final matchesSearch = job.title
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()) ||
-          job.description
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase());
+          (job.jobType ?? '').toLowerCase() == _selectedCategory.toLowerCase();
+      final matchesSearch = query.isEmpty ||
+          job.title.toLowerCase().contains(query) ||
+          job.description.toLowerCase().contains(query) ||
+          (job.jobType ?? '').toLowerCase().contains(query);
       final notRejected = !jobProvider.isRejectedFor(job.id, workerName);
       return matchesCategory && matchesSearch && notRejected;
     }).toList();
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Find Jobs'),
+        centerTitle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+        ),
+      ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // Modern Curved Search Bar
-            GestureDetector(
-              onTap: () => setState(() => _isExpanded = !_isExpanded),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 400),
-                height: _isExpanded ? 60 : 50,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: _isExpanded
-                      ? [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
-                      : [],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.black54),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Search for jobs...',
-                        ),
-                        onTap: () {
-                          if (!_isExpanded) {
-                            setState(() => _isExpanded = true);
-                          }
-                        },
+            // Curved search bar (cards style like register)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .04), blurRadius: 8)],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.search),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: const InputDecoration(
+                        hintText: 'Search for jobs...',
+                        border: InputBorder.none,
                       ),
+                      onTap: () {
+                        if (!_isExpanded) setState(() => _isExpanded = true);
+                      },
                     ),
-                    if (_searchController.text.isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.black54),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      ),
-                  ],
-                ),
+                  ),
+                  if (_searchController.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {});
+                      },
+                    ),
+                ],
               ),
             ),
 
-            // Categories Horizontal List
+            // Categories (shows when expanded)
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
+              duration: const Duration(milliseconds: 200),
               child: _isExpanded
                   ? Container(
-                      margin: const EdgeInsets.symmetric(vertical: 16),
+                      margin: const EdgeInsets.symmetric(vertical: 12),
                       height: 40,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
@@ -120,29 +110,16 @@ class _FindJobsScreenState extends State<FindJobsScreen>
                           final category = categories[index];
                           final isSelected = category == _selectedCategory;
                           return GestureDetector(
-                            onTap: () => setState(() {
-                              _selectedCategory = category;
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 8),
+                            onTap: () => setState(() => _selectedCategory = category),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Colors.blueAccent
-                                    : Colors.grey[300],
+                                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey[200],
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Center(
-                                child: Text(
-                                  category,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.black87,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                              child: Text(
+                                category,
+                                style: TextStyle(color: isSelected ? Colors.white : Colors.black87),
                               ),
                             ),
                           );
@@ -152,18 +129,14 @@ class _FindJobsScreenState extends State<FindJobsScreen>
                   : const SizedBox.shrink(),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
-            // Jobs List
+            // Jobs list
             Expanded(
               child: filteredJobs.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No jobs found.',
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
-                    )
+                  ? const Center(child: Text('No jobs found.'))
                   : ListView.builder(
+                      padding: const EdgeInsets.only(top: 8),
                       itemCount: filteredJobs.length,
                       itemBuilder: (context, index) {
                         final job = filteredJobs[index];
@@ -171,12 +144,13 @@ class _FindJobsScreenState extends State<FindJobsScreen>
                           padding: const EdgeInsets.only(bottom: 12),
                           child: JobCard(
                             job: job,
-                            onTap: () => _showJobDetails(
-                              context,
-                              job,
-                              jobProvider,
-                              workerName,
-                            ),
+                            onTap: () {
+                              // navigate to details screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => JobDetailsScreen(job: job)),
+                              );
+                            }, 
                           ),
                         );
                       },
@@ -185,57 +159,6 @@ class _FindJobsScreenState extends State<FindJobsScreen>
           ],
         ),
       ),
-    );
-  }
-
-  // Job details popup with Accept/Reject
-  void _showJobDetails(BuildContext context, Job job,
-      JobProvider jobProvider, String workerName) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(job.title),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(job.description),
-              const SizedBox(height: 10),
-              _detail('Amount', job.amount),
-              _detail('Location', job.location),
-              _detail('Type', job.jobType),
-              _detail('Tenure', job.tenure),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              jobProvider.rejectJob(job.id, workerName);
-              Navigator.pop(context);
-            },
-            child: const Text('Reject'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              jobProvider.assignJob(job.id, workerName);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Accepted successfully!')),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Accept'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detail(String label, String? value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Text('$label: ${value ?? 'N/A'}'),
     );
   }
 }

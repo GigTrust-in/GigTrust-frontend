@@ -14,8 +14,8 @@ class RatingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap( // ✅ Wrap prevents overflow
-      spacing: 2, // small space between stars
+    return Wrap( 
+      spacing: 2, 
       children: List.generate(5, (index) {
         final starIndex = index + 1;
         return GestureDetector(
@@ -25,7 +25,7 @@ class RatingWidget extends StatelessWidget {
           child: Icon(
             starIndex <= rating ? Icons.star : Icons.star_border,
             color: Colors.amber,
-            size: 18, // ✅ smaller, clean size
+            size: 18, 
           ),
         );
       }),

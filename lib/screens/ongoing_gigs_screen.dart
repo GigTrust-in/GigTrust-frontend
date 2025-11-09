@@ -1,183 +1,142 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../providers/job_provider.dart';
 import '../models/job.dart';
+import '../widgets/job_card.dart';
+import 'job_details_screen.dart';
 
 class OngoingGigsScreen extends StatelessWidget {
   const OngoingGigsScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<AuthProvider>(context).user;
+  // Function to show bottom sheet with options
+  void _showJobOptions(BuildContext context, Job job) {
+    final jobProvider = Provider.of<JobProvider>(context, listen: false);
 
-    final sample = List.generate(
-      5,
-      (i) => Job(
-        id: 'job-${i + 1}',
-        title: 'Gig ${i + 1}',
-        description: 'Detailed work description for gig ${i + 1}.',
-        clientName: 'Client ${i + 1}',
-        postedDate: DateTime.parse('2025-11-03'),
-        status: i < 3 ? 'Ongoing' : 'Completed',
-        amount: '₹${(i + 1) * 500}',
-        location: 'Remote',
-        tenure: '2 weeks',
-        paid: i >= 3,
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-    );
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Your Gigs')),
-      body: Padding(
-        padding: const EdgeInsets.all(8),
-        child: user == null
-            ? const Center(child: Text('Please login to see ongoing gigs.'))
-            : ListView.builder(
-                itemCount: sample.length,
-                itemBuilder: (context, index) {
-                  final job = sample[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ExpandableJobTile(job: job),
-                  );
-                },
-              ),
-      ),
-    );
-  }
-}
-
-class ExpandableJobTile extends StatefulWidget {
-  final Job job;
-  const ExpandableJobTile({super.key, required this.job});
-
-  @override
-  State<ExpandableJobTile> createState() => _ExpandableJobTileState();
-}
-
-class _ExpandableJobTileState extends State<ExpandableJobTile> {
-  bool _expanded = false;
-  late Job _currentJob;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentJob = widget.job; // create a mutable copy for UI updates
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: () => setState(() => _expanded = !_expanded),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[900] : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            if (!isDark)
-              const BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-          ],
-        ),
-        height: _expanded ? 220 : 70, // slightly increased for button
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _currentJob.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _currentJob.status,
-                  style: TextStyle(
-                    color: _currentJob.status == 'Completed'
-                        ? Colors.green
-                        : Colors.orange,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  _currentJob.amount ?? '',
-                  style: TextStyle(
-                    color: isDark ? Colors.grey[300] : Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            if (_expanded) ...[
-              const SizedBox(height: 8),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Text(
-                _currentJob.description,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isDark ? Colors.grey[300] : Colors.black87,
+                job.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Client: ${_currentJob.clientName}',
-                style: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
 
-              // Mark as Complete button for ongoing jobs
-              if (_currentJob.status != 'Completed')
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isDark ? Colors.blue[700] : Colors.blueAccent,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _currentJob = _currentJob.copyWith(status: 'Completed');
-                    });
+              // --- Mark as Complete Button ---
+              ElevatedButton.icon(
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Mark as Complete'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () async {
+                  Navigator.pop(context); // close bottom sheet first
+                  final confirm = await _showConfirmationDialog(context, job);
+
+                  if (confirm == true) {
+                    jobProvider.completeJob(job.id);
+
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
                           'Job marked as complete! Money will be credited into your account.',
                         ),
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
-                  },
-                  child: const Text('Mark as Complete'),
-                ),
+                  }
+                },
+              ),
 
-              // Rate Client button if job is completed
-              if (_currentJob.status == 'Completed')
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isDark ? Colors.green[700] : Colors.green,
-                  ),
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/feedback',
-                      arguments: _currentJob,
-                    );
-                  },
-                  child: const Text('Rate Client'),
+              const SizedBox(height: 10),
+
+              // --- View Details Button ---
+              OutlinedButton.icon(
+                icon: const Icon(Icons.info_outline),
+                label: const Text('View More'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => JobDetailsScreen(job: job),
+                    ),
+                  );
+                },
+              ),
             ],
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Function for confirmation dialog
+  Future<bool?> _showConfirmationDialog(BuildContext context, Job job) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Confirm Completion'),
+        content: Text(
+          'Are you sure you want to mark "${job.title}" as complete?',
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Yes, Complete'),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final jobProvider = Provider.of<JobProvider>(context);
+    final ongoingJobs = jobProvider.ongoingJobs;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ongoing Jobs'),
+      ),
+      body: ongoingJobs.isEmpty
+          ? const Center(
+              child: Text('No ongoing jobs right now.'),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: ongoingJobs.length,
+              itemBuilder: (context, index) {
+                final job = ongoingJobs[index];
+                return JobCard(
+                  job: job,
+                  onTap: () => _showJobOptions(context, job),
+                );
+              },
+            ),
     );
   }
 }
