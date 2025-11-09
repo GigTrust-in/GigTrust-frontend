@@ -25,7 +25,9 @@ class _FindJobsScreenState extends State<FindJobsScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final workerName = auth.user?.name ?? 'Worker';
 
-    final List<Job> allJobs = jobProvider.allJobs;
+    final List<Job> allJobs = jobProvider.allJobs
+        .where((job) => job.status == 'Open') // Only show open jobs
+        .toList();
 
     // Get unique categories (stable order)
     final categories = <String>{'All', ...allJobs.map((job) => job.jobType ?? 'Others')}.toList();

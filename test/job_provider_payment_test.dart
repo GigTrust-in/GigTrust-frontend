@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/job.dart';
-import '../lib/models/job_status.dart';
-import '../lib/providers/job_provider.dart';
+import 'package:flutter_application_1/models/job.dart';
+import 'package:flutter_application_1/models/job_status.dart';
+import 'package:flutter_application_1/providers/job_provider.dart';
 
 void main() {
   group('JobProvider Payment Tests', () {
@@ -166,7 +166,7 @@ void main() {
         workerName: 'Worker',
         amount: '100.00',
         status: JobStatus.pendingCompletion,
-        paid: true,
+        paid: false,
         postedDate: now,
       ));
 

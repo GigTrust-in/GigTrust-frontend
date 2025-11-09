@@ -44,8 +44,8 @@ class _WorkerDashboardState extends State<WorkerDashboard>
         ),
         body: TabBarView(
           children: [
-            _buildGrid(context, jobProvider.ongoingJobs),
-            _buildGrid(context, jobProvider.pastJobs),
+            _buildGrid(context, jobProvider.getOngoingJobs(isWorker: true, userName: user?.name ?? '')),
+            _buildGrid(context, jobProvider.pastJobs.where((j) => j.workerName == user?.name).toList()),
             Consumer<JobProvider>(
               builder: (context, provider, _) {
                 final user = Provider.of<AuthProvider>(context).user;

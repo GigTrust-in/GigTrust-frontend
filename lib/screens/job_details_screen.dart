@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/screens/rating_screen.dart';
 import 'package:provider/provider.dart';
 import '../models/job.dart';
 import '../providers/job_provider.dart';
@@ -13,7 +14,6 @@ class JobDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
-    final jobProvider = Provider.of<JobProvider>(context);
     final isWorker = user?.name == job.workerName;
     final theme = Theme.of(context);
 
@@ -26,7 +26,12 @@ class JobDetailsScreen extends StatelessWidget {
               icon: const Icon(Icons.star_border),
               tooltip: 'Rate',
               onPressed: () {
-                // TODO: Navigate to rating screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RatingScreen(job: job, jobId: '', role: '', targetName: '',),
+                  ),
+                );
               },
             ),
         ],
@@ -37,7 +42,7 @@ class JobDetailsScreen extends StatelessWidget {
           children: [
             // Status Banner
             Container(
-              color: _getStatusColor(job.status).withOpacity(0.1),
+              color: _getStatusColor(job.status).withValues(alpha: 0.1),
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               child: Row(
                 children: [

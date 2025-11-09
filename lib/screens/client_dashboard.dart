@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/job_provider.dart';
+import '../models/role.dart';
 import '../widgets/job_card.dart';
 import '../widgets/top_profile_menu.dart';
 import '../models/job.dart';
@@ -132,6 +133,19 @@ class _ClientDashboardState extends State<ClientDashboard> {
               );
 
               Provider.of<JobProvider>(context, listen: false).addJob(newJob);
+              // Notify all registered workers about the new job post
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final workers = authProvider.getUsersByRole(Role.worker);
+              final jobProv = Provider.of<JobProvider>(context, listen: false);
+              for (final w in workers) {
+                jobProv.addNotification(
+                  to: w.name,
+                  from: user.name,
+                  message: 'New job posted: "${newJob.title}"',
+                  type: 'new_job',
+                  jobId: newJob.id,
+                );
+              }
               Navigator.pop(context);
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -149,6 +163,8 @@ class _ClientDashboardState extends State<ClientDashboard> {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
     final jobProvider = Provider.of<JobProvider>(context);
+
+    final userName = user?.name ?? '';
 
     return DefaultTabController(
       length: 2,
@@ -176,8 +192,10 @@ class _ClientDashboardState extends State<ClientDashboard> {
         ),
         body: TabBarView(
           children: [
-            _buildJobList(jobProvider.ongoingJobs),
-            _buildJobList(jobProvider.pastJobs),
+            // Show only this client's ongoing jobs
+            _buildJobList(jobProvider.getOngoingJobs(isWorker: false, userName: userName)),
+            // Filter past jobs to this client
+            _buildJobList(jobProvider.pastJobs.where((j) => j.clientName == userName).toList()),
           ],
         ),
         floatingActionButton: user == null

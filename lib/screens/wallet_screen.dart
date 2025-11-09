@@ -128,6 +128,33 @@ class WalletScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          onTap: () {
+                            // Show transaction details
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: Text(title),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Amount: $amountText'),
+                                    const SizedBox(height: 8),
+                                    Text('Type: ${tx['type'] ?? 'N/A'}'),
+                                    const SizedBox(height: 8),
+                                    Text('Counterparty: ${tx['counterparty'] ?? 'N/A'}'),
+                                    const SizedBox(height: 8),
+                                    Text('Tx: ${tx['tx'] ?? tx['txId'] ?? 'N/A'}'),
+                                    const SizedBox(height: 8),
+                                    Text('Time: ${(tx['timestamp'] ?? tx['date'] ?? '')}'),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+                                ],
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -183,7 +210,7 @@ class WalletScreen extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
           textAlign: TextAlign.center,
         ),

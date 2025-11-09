@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/job.dart';
+import '../providers/auth_provider.dart';
+import '../models/role.dart';
+import '../models/job_status.dart';
 
 import 'job_action_buttons.dart';
 
@@ -21,6 +25,13 @@ class JobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     Text(job.title, style: theme.textTheme.titleMedium);
+
+    // Determine whether to show action buttons based on passed flags or current user role
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final currentUser = auth.user;
+    final bool isWorkerUser = currentUser?.role == Role.worker;
+    final bool computedShowAcceptReject = showActions || (isWorkerUser && job.status == JobStatus.open);
+    final bool computedShowComplete = showComplete || (isWorkerUser && job.status == JobStatus.assigned && job.workerName == currentUser?.name);
 
     return InkWell(
       onTap: onTap,
@@ -90,13 +101,13 @@ class JobCard extends StatelessWidget {
               ),
               
               // Action buttons (Accept/Reject or Complete)
-              if (showActions || showComplete)
+              if (computedShowAcceptReject || computedShowComplete)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: JobActionButtons(
                     job: job,
-                    showAcceptReject: showActions,
-                    showComplete: showComplete,
+                    showAcceptReject: computedShowAcceptReject,
+                    showComplete: computedShowComplete,
                   ),
                 ),
             ],

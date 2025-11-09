@@ -11,10 +11,18 @@ class JobProvider with ChangeNotifier {
 
   List<Job> get allJobs => [..._allJobs];
 
-  List<Job> get ongoingJobs => _allJobs
-      .where((job) => job.status == JobStatus.open ||
-                      job.status == JobStatus.assigned ||
-                      job.status == JobStatus.pendingCompletion)
+  List<Job> getOngoingJobs({required bool isWorker, required String userName}) => _allJobs
+      .where((job) {
+        final isOngoing = job.status == JobStatus.open ||
+                         job.status == JobStatus.assigned ||
+                         job.status == JobStatus.pendingCompletion;
+        
+        if (!isOngoing) return false;
+        
+        return isWorker 
+            ? job.workerName == userName
+            : job.clientName == userName;
+      })
       .toList();
 
   List<Job> get pastJobs => _allJobs
@@ -79,7 +87,7 @@ class JobProvider with ChangeNotifier {
           completedAt: now,
           feedbackToWorker: feedback,
         );
-        _handleJobCompletion(job);
+        // Defer completion handling until after the updated job is persisted below
         break;
 
       case JobStatus.cancelled:
@@ -88,6 +96,13 @@ class JobProvider with ChangeNotifier {
     }
 
     _allJobs[index] = updatedJob;
+
+    // If the job just moved to completed, handle payment/notifications now that
+    // the persisted job reflects the completed status.
+    if (newStatus == JobStatus.completed) {
+      _handleJobCompletion(updatedJob);
+    }
+
     notifyListeners();
   }
 
@@ -154,6 +169,40 @@ class JobProvider with ChangeNotifier {
       workerName: workerName,
       workerPaymentInfo: workerPaymentInfo,
     );
+  }
+
+  /// Worker cancels their assignment and returns the job to Open state.
+  /// This is a worker-initiated unassign operation (not the same as client cancelling).
+  void unassignJob(String jobId, String workerName) {
+    final index = _allJobs.indexWhere((j) => j.id == jobId);
+    if (index == -1) throw Exception('Job not found');
+
+    final job = _allJobs[index];
+    if (job.workerName != workerName) {
+      throw Exception('Only the assigned worker can unassign this job');
+    }
+
+    // Create an updated job reverting assignment fields
+    final updated = job.copyWith(
+      status: JobStatus.open,
+      workerName: null,
+      workerPaymentInfo: null,
+      assignedAt: null,
+      pendingCompletionAt: null,
+    );
+
+    _allJobs[index] = updated;
+
+    // Notify the client that worker cancelled
+    addNotification(
+      to: job.clientName,
+      from: workerName,
+      message: 'Worker $workerName cancelled their assignment for "${job.title}"',
+      type: 'worker_cancelled',
+      jobId: jobId,
+    );
+
+    notifyListeners();
   }
 
   void rejectJob(String jobId, String workerName) {

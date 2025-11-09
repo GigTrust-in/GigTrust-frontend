@@ -101,6 +101,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Returns a list of users filtered by role.
+  List<User> getUsersByRole(Role role) {
+    return _users.values.where((u) => u.role == role).toList();
+  }
+
   /// Adds a rating to a user identified by name (in-memory). Updates rating sum and count.
   void addRatingToUserByName(String name, double rating) {
     final entry = _users.entries.firstWhere(

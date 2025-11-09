@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/job_provider.dart';
+import '../providers/auth_provider.dart';
+import '../models/role.dart';
 import '../widgets/job_card.dart';
 import 'job_details_screen.dart';
 import 'job_completion_screen.dart';
@@ -11,7 +13,10 @@ class OngoingGigsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final jobProvider = Provider.of<JobProvider>(context);
-    final ongoingJobs = jobProvider.ongoingJobs;
+    final auth = Provider.of<AuthProvider>(context);
+  final isWorker = auth.user?.role == Role.worker;
+    final userName = auth.user?.name ?? '';
+    final ongoingJobs = jobProvider.getOngoingJobs(isWorker: isWorker, userName: userName);
 
     return Scaffold(
       appBar: AppBar(
