@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import '../models/job.dart';
 
+import 'job_action_buttons.dart';
+
 class JobCard extends StatelessWidget {
   final Job job;
   final VoidCallback onTap;
+  final bool showActions;
+  final bool showComplete;
 
   const JobCard({
     super.key,
     required this.job,
-    required this.onTap, 
+    required this.onTap,
+    this.showActions = false,
+    this.showComplete = false,
   });
 
   @override
@@ -82,6 +88,17 @@ class JobCard extends StatelessWidget {
                   ),
                 ],
               ),
+              
+              // Action buttons (Accept/Reject or Complete)
+              if (showActions || showComplete)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: JobActionButtons(
+                    job: job,
+                    showAcceptReject: showActions,
+                    showComplete: showComplete,
+                  ),
+                ),
             ],
           ),
         ),
@@ -94,10 +111,14 @@ class JobCard extends StatelessWidget {
     switch (status) {
       case 'Completed':
         return Colors.green;
-      case 'Ongoing':
+      case 'Assigned':
         return Colors.blue;
-      default:
+      case 'PendingCompletion':
+        return Colors.purple;
+      case 'Open':
         return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/job_provider.dart';
 import '../providers/auth_provider.dart';
+import '../models/role.dart';
 
 class WalletScreen extends StatelessWidget {
   const WalletScreen({super.key});
@@ -11,41 +12,23 @@ class WalletScreen extends StatelessWidget {
     final jobProvider = Provider.of<JobProvider>(context);
     final user = Provider.of<AuthProvider>(context).user;
 
-    double balance = 0.0;
-    double escrowed = 0.0;
-    final List<Map<String, String>> transactions = [];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? Colors.grey[850] : Colors.green.shade50;
+    
+    Map<String, dynamic> stats = {};
+    List<Map<String, dynamic>> history = [];
 
     if (user != null) {
-      for (final job in jobProvider.allJobs) {
-        final amt = double.tryParse(job.amount ?? '0') ?? 0.0;
-        if (job.status == 'Completed' && job.workerName == user.name) {
-          balance += amt;
-          transactions.add({
-            'title': 'Job Payment — ${job.title}',
-            'amount': '+₹${amt.toStringAsFixed(0)}'
-          });
-        }
-        if (job.status == 'Assigned' && job.workerName == user.name) {
-          escrowed += amt;
-          transactions.add({
-            'title': 'Escrow — ${job.title}',
-            'amount': '₹${amt.toStringAsFixed(0)}'
-          });
-        }
-        if (job.status == 'Completed' && job.clientName == user.name) {
-          transactions.add({
-            'title': 'Paid — ${job.title}',
-            'amount': '-₹${amt.toStringAsFixed(0)}'
-          });
-          balance -= amt;
-        }
-      }
+      final isWorker = user.role == Role.worker;
+      
+      // Get user's payment statistics
+      stats = isWorker 
+        ? jobProvider.getWorkerPaymentStats(user.name)
+        : jobProvider.getClientPaymentStats(user.name);
+      
+      // Get transaction history
+      history = jobProvider.getTransactionHistory(user.name, isWorker: isWorker);
     }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark
-        ? Colors.grey[850]
-        : Colors.green.shade50;
 
     return Scaffold(
       appBar: AppBar(
@@ -67,12 +50,12 @@ class WalletScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Available Balance',
+                      user?.role == Role.worker ? 'Total Earnings' : 'Total Spent',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '₹${balance.toStringAsFixed(0)}',
+                      '₹${stats['totalEarned'] ?? stats['totalPaid'] ?? '0.00'}',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.greenAccent : Colors.green.shade700,
@@ -80,7 +63,9 @@ class WalletScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Escrowed: ₹${escrowed.toStringAsFixed(0)}',
+                      user?.role == Role.worker 
+                        ? 'Pending: ₹${stats['totalPending'] ?? '0.00'}'
+                        : 'In Escrow: ₹${stats['totalInEscrow'] ?? '0.00'}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: isDark ? Colors.grey[400] : Colors.grey[700],
                           ),
@@ -94,7 +79,7 @@ class WalletScreen extends StatelessWidget {
 
             // Transactions List
             Expanded(
-              child: transactions.isEmpty
+              child: history.isEmpty
                   ? Center(
                       child: Text(
                         'No transactions yet.',
@@ -102,23 +87,42 @@ class WalletScreen extends StatelessWidget {
                       ),
                     )
                   : ListView.separated(
-                      itemCount: transactions.length,
+                      itemCount: history.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
                       itemBuilder: (context, index) {
-                        final tx = transactions[index];
-                        final isCredit = tx['amount']!.startsWith('+');
+                        final tx = history[index];
+                        final isCompleted = tx['type'] == 'completed';
+                        final amount = double.tryParse(tx['amount'] ?? '0') ?? 0.0;
+                        final isWorker = user?.role == Role.worker;
+                        
+                        // Format amount display
+                        final amountText = isWorker
+                          ? '+₹${amount.toStringAsFixed(0)}'
+                          : '-₹${amount.toStringAsFixed(0)}';
+
+                        // Get transaction title
+                        final title = isCompleted
+                          ? 'Payment — ${tx['title']}'
+                          : 'Escrow — ${tx['title']}';
+                        
                         return ListTile(
                           leading: Icon(
-                            isCredit ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: isCredit
+                            isCompleted ? Icons.check_circle : Icons.pending,
+                            color: isCompleted
                                 ? (isDark ? Colors.greenAccent : Colors.green)
-                                : (isDark ? Colors.redAccent : Colors.red),
+                                : (isDark ? Colors.orangeAccent : Colors.orange),
                           ),
-                          title: Text(tx['title']!),
-                          trailing: Text(
-                            tx['amount']!,
+                          title: Text(title),
+                          subtitle: Text(
+                            '${tx['type']?.toString().toUpperCase()} • ${tx['counterparty']}',
                             style: TextStyle(
-                              color: isCredit
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                          trailing: Text(
+                            amountText,
+                            style: TextStyle(
+                              color: isWorker
                                   ? (isDark ? Colors.greenAccent : Colors.green)
                                   : (isDark ? Colors.redAccent : Colors.red),
                               fontWeight: FontWeight.bold,
@@ -131,30 +135,59 @@ class WalletScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Escrowed Transactions
-            if (user != null && jobProvider.escrowTxForWorker(user.name).isNotEmpty) ...[
+            // Stats Summary
+            if (stats.isNotEmpty) ...[
               const Divider(),
               const SizedBox(height: 8),
-              Text(
-                'Escrowed (on-chain)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatCard(
+                    context,
+                    'Completed Jobs',
+                    stats['completedJobs']?.toString() ?? '0',
+                    Icons.check_circle_outline,
+                  ),
+                  _buildStatCard(
+                    context,
+                    user?.role == Role.worker ? 'Pending Jobs' : 'Ongoing Jobs',
+                    stats['pendingJobs']?.toString() ?? stats['ongoingJobs']?.toString() ?? '0',
+                    Icons.pending_outlined,
+                  ),
+                  _buildStatCard(
+                    context,
+                    'Avg per Job',
+                    '₹${stats['averagePerJob'] ?? stats['averageJobCost'] ?? '0'}',
+                    Icons.insights_outlined,
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              ...jobProvider.escrowTxForWorker(user.name).map((e) => ListTile(
-                    leading: const Icon(Icons.account_balance_wallet_outlined),
-                    title: Text(e['title'] ?? ''),
-                    subtitle: Text('Tx: ${e['tx']}'),
-                    trailing: Text(
-                      '₹${e['amount']}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  )),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

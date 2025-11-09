@@ -5,6 +5,7 @@ import '../providers/job_provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/job_card.dart';
 import '../widgets/top_profile_menu.dart';
+import '../widgets/job_action_buttons.dart';
 import '../models/job.dart';
 import 'rating_screen.dart';
 
@@ -144,17 +145,60 @@ class _WorkerDashboardState extends State<WorkerDashboard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(job.description),
-              const SizedBox(height: 12),
-              Text('Amount: ₹${job.amount ?? 'N/A'}'),
-              Text('Location: ${job.location ?? 'N/A'}'),
-              Text('Type: ${job.jobType ?? 'N/A'}'),
-              Text('Tenure: ${job.tenure ?? 'N/A'}'),
-              Text('Status: ${job.status}'),
+              Text(
+                job.description,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 16),
+              _infoTile('Amount', '₹${job.amount ?? 'N/A'}'),
+              _infoTile('Location', job.location),
+              _infoTile('Type', job.jobType),
+              _infoTile('Tenure', job.tenure),
+              _infoTile('Status', job.status),
+              if (job.workerName == user?.name) ...[
+                const Divider(height: 24),
+                _infoTile('Assigned', job.assignedAt?.toString() ?? 'N/A'),
+                if (job.status == 'PendingCompletion')
+                  _infoTile('Marked Complete', job.pendingCompletionAt?.toString() ?? 'N/A'),
+                if (job.status == 'Completed')
+                  _infoTile('Completed', job.completedAt?.toString() ?? 'N/A'),
+              ],
+              if (job.feedbackToWorker != null) ...[
+                const Divider(height: 24),
+                Text(
+                  'Feedback from Client:',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(job.feedbackToWorker!),
+              ],
             ],
           ),
         ),
         actions: _actionsForJob(context, job, jobProvider, user?.name),
+      ),
+    );
+  }
+
+  Widget _infoTile(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(value ?? 'N/A'),
+          ),
+        ],
       ),
     );
   }
@@ -172,26 +216,11 @@ class _WorkerDashboardState extends State<WorkerDashboard>
           onPressed: () => Navigator.pop(context),
           child: const Text('Close'),
         ),
-        ElevatedButton(
-          onPressed: () {
-            provider.completeJob(job.id);
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Marked as completed')),
-            );
-            setState(() {});
-          },
-          child: const Text('Mark as complete'),
-        ),
-        OutlinedButton(
-          onPressed: () {
-            provider.addJob(job.copyWith(status: 'Open', workerName: null));
-            Navigator.pop(context);
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Job reopened')));
-          },
-          child: const Text('Cancel'),
+        // Use JobActionButtons for consistency
+        const SizedBox(height: 8),
+        JobActionButtons(
+          job: job,
+          showComplete: true,
         ),
       ];
     }

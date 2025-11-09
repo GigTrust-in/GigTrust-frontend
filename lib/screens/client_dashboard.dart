@@ -7,6 +7,7 @@ import '../widgets/job_card.dart';
 import '../widgets/top_profile_menu.dart';
 import '../models/job.dart';
 import 'rating_screen.dart';
+import 'job_completion_screen.dart';
 
 class ClientDashboard extends StatefulWidget {
   const ClientDashboard({super.key});
@@ -260,6 +261,30 @@ class _ClientDashboardState extends State<ClientDashboard> {
   List<Widget> _clientDetailActions(BuildContext context, Job job) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.user;
+
+    // If job is pending completion -> allow client to review/confirm
+    if (job.status == 'PendingCompletion' &&
+        user != null &&
+        user.name == job.clientName) {
+      return [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => JobCompletionScreen(job: job),
+              ),
+            );
+          },
+          child: const Text('Review Completion'),
+        ),
+      ];
+    }
 
     // If assigned and not paid yet -> show Pay button
     if (job.status == 'Assigned' &&

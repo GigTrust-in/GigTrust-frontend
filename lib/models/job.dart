@@ -5,7 +5,10 @@ class Job {
   final String description;
   final String clientName;
   final DateTime postedDate;
-  final String status; // e.g. 'Ongoing', 'Completed', 'Pending', 'Open', 'Assigned'
+  final String status;
+  final DateTime? assignedAt;
+  final DateTime? pendingCompletionAt;
+  final DateTime? completedAt;
   final String? workerName;
   final String? amount;
   final String? tenure;
@@ -42,6 +45,9 @@ class Job {
     this.workerPaymentInfo,
     this.feedbackToClient,
     this.feedbackToWorker,
+    this.assignedAt,
+    this.pendingCompletionAt,
+    this.completedAt,
   });
 
   bool get isClientRated => workerRating != null;
@@ -68,6 +74,9 @@ class Job {
     String? workerPaymentInfo,
     String? feedbackToClient,
     String? feedbackToWorker,
+    DateTime? assignedAt,
+    DateTime? pendingCompletionAt,
+    DateTime? completedAt,
   }) {
     return Job(
       id: id ?? this.id,
@@ -90,6 +99,9 @@ class Job {
       workerPaymentInfo: workerPaymentInfo ?? this.workerPaymentInfo,
       feedbackToClient: feedbackToClient ?? this.feedbackToClient,
       feedbackToWorker: feedbackToWorker ?? this.feedbackToWorker,
+      assignedAt: assignedAt ?? this.assignedAt,
+      pendingCompletionAt: pendingCompletionAt ?? this.pendingCompletionAt,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 }

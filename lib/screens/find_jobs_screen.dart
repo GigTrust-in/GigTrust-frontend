@@ -144,6 +144,7 @@ class _FindJobsScreenState extends State<FindJobsScreen> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: JobCard(
                             job: job,
+                            showActions: true,
                             onTap: () {
                               // navigate to details screen
                               Navigator.push(
