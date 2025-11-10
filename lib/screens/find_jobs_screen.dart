@@ -1,4 +1,3 @@
-// lib/screens/find_jobs_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/job.dart';
@@ -25,12 +24,12 @@ class _FindJobsScreenState extends State<FindJobsScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final workerName = auth.user?.name ?? 'Worker';
 
-    final List<Job> allJobs = jobProvider.allJobs
-        .where((job) => job.status == 'Open') // Only show open jobs
-        .toList();
+    final List<Job> allJobs =
+        jobProvider.allJobs.where((job) => job.status == 'Open').toList();
 
-    // Get unique categories (stable order)
-    final categories = <String>{'All', ...allJobs.map((job) => job.jobType ?? 'Others')}.toList();
+    final categories =
+        <String>{'All', ...allJobs.map((job) => job.jobType ?? 'Others')}
+            .toList();
 
     final query = _searchController.text.trim().toLowerCase();
 
@@ -46,6 +45,7 @@ class _FindJobsScreenState extends State<FindJobsScreen> {
     }).toList();
 
     return Scaffold(
+      resizeToAvoidBottomInset: true, // shift when keyboard appears
       appBar: AppBar(
         title: const Text('Find Jobs'),
         centerTitle: true,
@@ -54,112 +54,155 @@ class _FindJobsScreenState extends State<FindJobsScreen> {
         ),
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            // Curved search bar (cards style like register)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .04), blurRadius: 8)],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  const Icon(Icons.search),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        hintText: 'Search for jobs...',
-                        border: InputBorder.none,
-                      ),
-                      onTap: () {
-                        if (!_isExpanded) setState(() => _isExpanded = true);
-                      },
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        // 🔍 Search Bar
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: .04),
+                                blurRadius: 8,
+                              )
+                            ],
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.search),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Search for jobs...',
+                                    border: InputBorder.none,
+                                  ),
+                                  onTap: () {
+                                    if (!_isExpanded) {
+                                      setState(() => _isExpanded = true);
+                                    }
+                                  },
+                                ),
+                              ),
+                              if (_searchController.text.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {});
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        // 🏷️ Categories
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: _isExpanded
+                              ? Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  height: 40,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: categories.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(width: 8),
+                                    itemBuilder: (context, index) {
+                                      final category = categories[index];
+                                      final isSelected =
+                                          category == _selectedCategory;
+                                      return GestureDetector(
+                                        onTap: () => setState(
+                                            () => _selectedCategory = category),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                : Colors.grey[200],
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            category,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // 📋 Job List
+                        Expanded(
+                          child: filteredJobs.isEmpty
+                              ? const Center(child: Text('No jobs found.'))
+                              : ListView.builder(
+                                  physics: const BouncingScrollPhysics(),
+                                  shrinkWrap: true,
+                                  padding: const EdgeInsets.only(top: 8),
+                                  itemCount: filteredJobs.length,
+                                  itemBuilder: (context, index) {
+                                    final job = filteredJobs[index];
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: JobCard(
+                                        job: job,
+                                        showActions: true,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  JobDetailsScreen(job: job),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+
+                        const SizedBox(height: 20), // bottom safe space
+                      ],
                     ),
                   ),
-                  if (_searchController.text.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                    ),
-                ],
+                ),
               ),
-            ),
-
-            // Categories (shows when expanded)
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _isExpanded
-                  ? Container(
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      height: 40,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: categories.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          final category = categories[index];
-                          final isSelected = category == _selectedCategory;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedCategory = category),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey[200],
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                category,
-                                style: TextStyle(color: isSelected ? Colors.white : Colors.black87),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Jobs list
-            Expanded(
-              child: filteredJobs.isEmpty
-                  ? const Center(child: Text('No jobs found.'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.only(top: 8),
-                      itemCount: filteredJobs.length,
-                      itemBuilder: (context, index) {
-                        final job = filteredJobs[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: JobCard(
-                            job: job,
-                            showActions: true,
-                            onTap: () {
-                              // navigate to details screen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => JobDetailsScreen(job: job)),
-                              );
-                            }, 
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

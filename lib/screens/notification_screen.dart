@@ -1,8 +1,9 @@
+// lib/screens/notification_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/job_provider.dart';
 import '../providers/auth_provider.dart';
-import '../widgets/notification_item.dart';
+
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -25,7 +26,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       );
     }
 
-    final notifications = jobProvider.getNotificationsForUser(user.name);
+    final notification = jobProvider.getNotificationsForUser(user.name);
     final unreadCount = jobProvider.getUnreadCount(user.name);
 
     return Scaffold(
@@ -53,7 +54,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ],
         ),
         actions: [
-          if (notifications.isNotEmpty) ...[
+          if (notification.isNotEmpty) ...[
             if (unreadCount > 0)
               IconButton(
                 icon: const Icon(Icons.done_all),
@@ -68,10 +69,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
               tooltip: 'Clear all read',
               onPressed: () {
                 // Remove all read notifications
-                final readNotifs = notifications
+                final readNotifs = notification
                     .where((n) => n['read'] == true)
                     .toList();
                 for (final notif in readNotifs) {
+                  // keep same call style you used earlier
                   jobProvider.removeNotification(notif);
                 }
                 setState(() {});
@@ -80,7 +82,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ],
         ],
       ),
-      body: notifications.isEmpty
+      body: notification.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -107,17 +109,74 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onRefresh: () async {
                 setState(() {});
               },
-              child: ListView.builder(
+              child: ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: notifications.length,
+                itemCount: notification.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  final notification = notifications[index];
-                  return NotificationItem(
-                    key: ValueKey(notification['id']),
-                    notification: notification,
-                    onTap: () {
-                      if (!notification['read']) {
-                        jobProvider.markNotificationRead(notification['id']);
+                  final notif = notification[index];
+                  final type = notif['type'];
+                  final from = notif['from'];
+                  final message = notif['message'] ?? 'No Message';
+                  final ts = notif['timestamp'];
+
+                  Widget trailing = const Icon(Icons.chevron_right);
+
+                  if (type == 'assignment_request') {
+                    trailing = Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            if (from != null) {
+                              jobProvider.assignJob(notif['jobId'], from);
+                              jobProvider.addNotification(
+                                to: from,
+                                from: user.name,
+                                message:
+                                    'Your request to join "${notif['jobId']}" was accepted',
+                                type: 'assignment_accepted',
+                                jobId: notif['jobId'],
+                              );
+                            }
+                            jobProvider.removeNotification(notif);
+                            setState(() {});
+                          },
+                          child: const Text('Accept'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            if (from != null) {
+                              jobProvider.addNotification(
+                                to: from,
+                                from: user.name,
+                                message:
+                                    'Your request to join job was rejected',
+                                type: 'assignment_rejected',
+                                jobId: notif['jobId'],
+                              );
+                            }
+                            jobProvider.removeNotification(notif);
+                            setState(() {});
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: const Text('Reject'),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListTile(
+                    leading: const Icon(Icons.notifications),
+                    title: Text(message),
+                    subtitle: ts != null ? Text(ts.toString()) : null,
+                    trailing: trailing,
+                    onTap: (){
+                      if (!notif['read']) {
+                        jobProvider.markNotificationRead(notif['id']);
                         setState(() {});
                       }
                     },
@@ -127,61 +186,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
     );
   }
-
-                Widget trailing = const Icon(Icons.chevron_right);
-
-                // Handle assignment request specially
-                if (type == 'assignment_request') {
-                  trailing = Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          // Accept assignment: assign job to worker
-                          if (from != null) {
-                            jobProvider.assignJob(notif['jobId'], from);
-                            // Notify worker
-                            jobProvider.addNotification(
-                              to: from,
-                              from: user.name,
-                              message: 'Your request to join "${notif['jobId']}" was accepted',
-                              type: 'assignment_accepted',
-                              jobId: notif['jobId'],
-                            );
-                          }
-                          jobProvider.removeNotification(notif);
-                        },
-                        child: const Text('Accept'),
-                      ),
-                      const SizedBox(width: 8),
-                      TextButton(
-                        onPressed: () {
-                          if (from != null) {
-                            jobProvider.addNotification(
-                              to: from,
-                              from: user.name,
-                              message: 'Your request to join job was rejected',
-                              type: 'assignment_rejected',
-                              jobId: notif['jobId'],
-                            );
-                          }
-                          jobProvider.removeNotification(notif);
-                        },
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Reject'),
-                      ),
-                    ],
-                  );
-                }
-
-                return ListTile(
-                  leading: const Icon(Icons.notifications),
-                  title: Text(message),
-                  subtitle: ts != null ? Text(ts.toString()) : null,
-                  trailing: trailing,
-                );
-              },
-            ),
-    );
-  }
 }
+
+                        

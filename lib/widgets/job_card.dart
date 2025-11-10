@@ -68,7 +68,7 @@ class JobCard extends StatelessWidget {
               if (job.tenure != null)
                 Text("Tenure: ${job.tenure}", style: const TextStyle(fontSize: 13)),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               // Bottom row: client name and status badge
               Row(
