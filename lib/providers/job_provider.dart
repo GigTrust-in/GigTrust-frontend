@@ -634,3 +634,5 @@ class JobProvider with ChangeNotifier {
   void fetchJobs() {}
   void applyForJob(String id) {}
 }
+
+//tarini

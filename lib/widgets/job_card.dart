@@ -62,11 +62,11 @@ class JobCard extends StatelessWidget {
 
               // Job details (amount, location, tenure)
               if (job.amount != null)
-                Text("₹ ${job.amount}", style: const TextStyle(fontSize: 13)),
+                Text("₹${job.amount}", style: const TextStyle(fontSize: 13)),
               if (job.location != null)
-                Text("Location: ${job.location}", style: const TextStyle(fontSize: 13)),
+                Text("Location:${job.location}", style: const TextStyle(fontSize: 13)),
               if (job.tenure != null)
-                Text("Tenure: ${job.tenure}", style: const TextStyle(fontSize: 13)),
+                Text("Tenure:${job.tenure}", style: const TextStyle(fontSize: 13)),
 
               const SizedBox(height: 6),
 
